@@ -141,6 +141,63 @@ and can only prompt for the third.
     follow the convention. Each warning says how to fix it, and none
     blocks a publish.
 
+### Where the skills live: `context-v/agent-skills/`, linked in
+
+Decided: a new site **ships its starter skills** in
+`context-v/agent-skills/<name>/SKILL.md`: the recommended ones above,
+plus `astro-knots` and the testing and LFM skills the required tier
+depends on. By convention:
+
+- **They stay there.** `context-v/agent-skills/` is the one real copy in
+  the repo. Nothing copies skills anywhere else.
+- **They evolve there.** When the site's people (or their agents) learn
+  something, they edit the skill in `context-v/agent-skills/`, commit it,
+  and log it. A site's skills are allowed to drift from ours; that's the
+  point. One that proves useful beyond the site can be offered back to
+  `lossless-agent-skills`.
+- **Agents reach them through symlinks.** Each harness looks for skills
+  in its own folder, so the repo commits **relative** links, one per
+  skill, per harness:
+
+  ```
+  .claude/skills/<name>  -> ../../context-v/agent-skills/<name>   # Claude Code
+  .agents/skills/<name>  -> ../../context-v/agent-skills/<name>   # Codex, Cursor, Pi, others
+  ```
+
+  A clone has working skills straight away, an edit to the real file is
+  live in every harness at once, and nothing depends on what's in a
+  person's home folder.
+- **Why repo-level links, not home-folder links:** links in `~/.claude/skills`
+  are shared by every repo on the machine, so two repos with a skill of
+  the same name fight over one link. We've been bitten by exactly that:
+  the anchor's sync script once pointed `context-vigilance` and
+  `changelog-conventions` at a stale copy in another repo.
+- **`knot_check` warns** when a skill in `context-v/agent-skills/` has no
+  link in a harness folder, or a link points somewhere else.
+
+The starter's `AGENTS.md` tells agents all of this. Draft of the section
+it ships with:
+
+> ## Agent skills
+>
+> This repo's skills live in `context-v/agent-skills/`, one folder per
+> skill with a `SKILL.md`. That folder is the only real copy.
+>
+> - **Use them.** Load the matching skill before working on what it
+>   covers: `astro-knots` for any code, `lossless-flavored-markdown` for
+>   content, `context-vigilance` for anything in `context-v/`,
+>   `changelog-conventions` and `git-conventions` before committing.
+> - **Your tool finds them through links.** `.claude/skills/` and
+>   `.agents/skills/` hold relative symlinks into `context-v/agent-skills/`.
+>   If your tool reads skills from another folder, add links there the
+>   same way: `ln -s ../../context-v/agent-skills/<name> <your-folder>/<name>`.
+>   Never copy a skill instead of linking it.
+> - **Improve them here.** When you learn something a skill should say,
+>   edit it in `context-v/agent-skills/`, not in a harness folder or your
+>   home folder, and say what changed in the changelog.
+> - **Adding a skill:** create `context-v/agent-skills/<name>/SKILL.md`,
+>   then add its links in every harness folder in the same commit.
+
 ### Taste (prompted for, never enforced)
 
 Design posture, voice, divergence from sibling sites. A design-review
@@ -297,9 +354,15 @@ Still open; this is a lean, not a decision.
 4. **Where do their sites live and deploy?** Their GitHub and their
    Cloudflare, or ours? If ours, the event-hog data-policy questions come
    with it.
-5. **How do we review taste?** A design-review prompt with screenshots,
+5. **How do evolved skills meet upstream updates?** A site edits its
+   `changelog-conventions`; we later improve ours. Does the MCP (or
+   `/cv:upgrade`) offer a merge, show a diff, or leave the site's copy
+   alone? Leaning: never overwrite, offer a diff.
+6. **Windows.** Committed symlinks need `core.symlinks` on Windows. Is a
+   fallback (a script that recreates the links) worth it for v1?
+7. **How do we review taste?** A design-review prompt with screenshots,
    human review, or simply out of scope?
-6. **What does success look like?** A proposal: a stranger with a coding
+8. **What does success look like?** A proposal: a stranger with a coding
    agent goes from nothing to a deployed site that passes `knot_check` in
    under an hour, without reading our docs.
 
