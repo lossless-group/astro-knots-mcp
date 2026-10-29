@@ -424,9 +424,29 @@ Consequences:
 ## Setup: a Nix flake and direnv
 
 Decided direction: every Astro Knot gets a **reproducible dev shell**. The
-starter ships `flake.nix` and `.envrc` (`use flake`), so `direnv allow`
-puts every command-line tool on the PATH at pinned versions, for the
+starter ships a `flake.nix`, and **every command runs inside it with
+`nix develop`**, so every tool is on the PATH at pinned versions, for the
 person and for their coding agent alike.
+
+**Strongly recommended: `nix develop`, not direnv** (decided 2026-10-29).
+We don't know the person or their computer, so we change as little about
+it as possible:
+
+- The agent runs each command as `nix develop --command <cmd>`
+  (`nix develop --command pnpm dev`, `nix develop --command vitest run`).
+  The environment exists for that command and is gone when it ends.
+- A person who wants to work in a terminal runs `nix develop` and gets a
+  shell with everything in it; `exit` leaves it.
+- Nothing edits their shell config (`~/.zshrc`), nothing needs approving
+  per folder, and nothing is installed globally. Tools live in
+  `/nix/store`, which nothing else on the machine reads; `nix store gc`
+  clears the unused ones.
+- direnv stays optional: the starter can include a `.envrc` (`use flake`)
+  for people who already use direnv, but no step depends on it.
+
+The starter's `AGENTS.md` says this in one line: *run every command
+through `nix develop --command`.* The plugin's hooks and `knot-check`
+can warn when a command ran outside it.
 
 **What goes in it**, from what our skills actually call:
 
@@ -466,7 +486,7 @@ To decide when it's built: one flake for every site, or a flake that
 takes options (with or without the media tools, say). Leaning: one, kept
 small, until a site needs otherwise.
 
-### Bootstrap: getting Nix and direnv onto the machine
+### Bootstrap: getting Nix onto the machine
 
 Homebrew can't be part of the flake: Nix *is* the package manager there,
 and it installs the site's tools itself. The machine's own package
@@ -490,14 +510,11 @@ it's running in PowerShell or inside WSL.
 The Nix installer is the same everywhere it runs (macOS, Linux, WSL):
 `curl -fsSL https://install.determinate.systems/nix | sh -s -- install`.
 
-**Then, once:** hook direnv into the shell (`eval "$(direnv hook zsh)"`
-in `~/.zshrc`, or `bash` in `~/.bashrc`), open the site's folder, and
-`direnv allow`. From then on, entering the folder loads the site's tools
-and leaving it unloads them.
-
-Alternative worth testing: skip the OS package manager for direnv too,
-with `nix profile install nixpkgs#direnv`. Then Homebrew is only needed on
-a Mac for the no-Nix fallback.
+**That's the whole bootstrap: Nix, once.** direnv isn't needed, since
+commands run through `nix develop`. The direnv commands in the table
+above are only for people who choose it, and then it's
+`eval "$(direnv hook zsh)"` in `~/.zshrc` and `direnv allow` in the
+folder. So on a Mac, Homebrew is only needed for the no-Nix fallback.
 
 **The no-Nix fallback** uses the same managers to install the tools in
 the flake's table directly: Homebrew on macOS, the distro's manager on
