@@ -444,28 +444,38 @@ person and for their coding agent alike.
 Left out on purpose, following the root flake's `js` aspect: Playwright's
 browsers (huge, and they don't run on NixOS; use a system browser).
 
-**Precedent, and the catch.** The root of our tree already has this
-pattern: `flake.nix` exports composable aspects (`js`, `py`, `machine`,
-…), and `templates/project/` shows a project choosing aspects in a few
-lines. But `lossless-monorepo` is **private**, so a site outside our tree
-can't import it. Options:
+**Who it's for: non-developers, through their coding agent.** Nobody
+should have to know what Node or ImageMagick is. The agent installs Nix
+and direnv once (the Determinate Systems installer is one command), then
+everything else comes from the flake. That's also why Nix: **no
+dependency collisions.** Each site gets its own pinned Node, pnpm and
+tools inside its folder; nothing is installed globally, nothing fights
+with another project or with what's already on the machine, and deleting
+the folder removes it all.
 
-1. **A self-contained flake in the starter.** Works for anyone today;
-   drifts from ours over time.
-2. **Publish the aspects somewhere public**, for instance this repo
-   exporting an `astro-knot` flake module (with a new `media` aspect for
-   the image and PDF tools). Starters import it in five lines and get
-   updates with `nix flake update`.
+**It's Astro Knots' own flake, not ours.** The root of our tree has a
+flake too, but that one sets up Michael's machine (editors, Rust, Python,
+the `machine` aspect) and lives in a private repo; it's not a model for
+this. The Astro Knot flake is purpose-built and small: only what an Astro
+Knots site and our skills need, kept in this repo as part of the starter,
+and versioned with the MCP. Keeping npm's global prefix and caches inside
+the project (as environment variables in the flake) closes the last
+place a collision could happen.
 
-Leaning: 1 for the first version, 2 once the tool list settles.
+To decide when it's built: one flake for every site, or a flake that
+takes options (with or without the media tools, say). Leaning: one, kept
+small, until a site needs otherwise.
 
 **Two follow-ons:**
 - **Make the skills portable.** `generate-consistent-og-images` uses
   macOS's `sips` and `qlmanage`, which don't exist on Linux or in a Nix
   shell. With ImageMagick in the flake, the skills should prefer it.
-- **Without Nix.** Not everyone will install Nix. The flake doubles as
-  the list of what's needed: `knot-check` warns about any missing tool,
-  and the agent can install it another way (Homebrew, apt).
+- **Without Nix.** Some machines won't allow it (locked-down work
+  laptops). The flake doubles as the list of what's needed: `knot-check`
+  warns about any missing tool, and the agent can install it another way,
+  at the cost of the isolation.
+- **Windows.** Nix needs WSL2 there. Worth deciding whether Windows is in
+  scope for the first version.
 
 ## What else to consider when building an MCP or a plugin
 
@@ -514,9 +524,11 @@ Leaning: 1 for the first version, 2 once the tool list settles.
 
 ## Questions to answer before a spec
 
-1. **Who is the first "anyone"?** A developer friend in Claude Code, a
-   client's marketing lead in Claude, or a stranger on the internet? It
-   decides between B and C.
+1. ~~**Who is the first "anyone"?**~~ Answered 2026-10-29:
+   **non-developers vibe coding with a coding agent** (Claude Code, Codex,
+   Cursor). Not Michael, and not people in a chat-only app. The agent has
+   a shell, so it does the local work; the person doesn't install or
+   configure anything themselves.
 2. ~~**How rigid?**~~ Partly answered: required (Vitest TDD, LFM, the
    mechanical stack rules), highly recommended (Context Vigilance and its
    skills), taste. Still open: which of the remaining "Yes" rows are
