@@ -55,8 +55,8 @@ what shape of server gets the most guarantee for the least machinery.
   `maintain-splash-pages`, `generate-consistent-og-images`. Agents read
   them well in our monorepo, where every skill is loaded. Nobody outside
   the monorepo has them.
-- **Some guardrails are mechanical, some are taste.** "No React, no JSX"
-  can be checked by a script. "Diverge in shape, not just in hue" can't.
+- **Some guardrails are mechanical, some are taste.** "No React" and "no
+  JSX patterns, even in `.astro` files" can be checked by a script. "Diverge in shape, not just in hue" can't.
   We haven't sorted ours into the two piles.
 - **We've learned this lesson once already.** event-hog's README separates
   *what the server guarantees* from *what it only asks the model to do*,
@@ -70,7 +70,8 @@ right-hand column is the important one.
 
 | Pattern | Source | Checkable by a script? |
 |---|---|---|
-| Astro, with Svelte for interactivity; no React, JSX, Angular | `astro-knots` skill, `Preferred-Stack` | Yes: dependencies and file extensions |
+| Astro, with Svelte for interactivity; no React, Preact, Solid or Angular | `astro-knots` skill, `Preferred-Stack` | Yes: dependencies, integrations in `astro.config`, file extensions |
+| **No JSX patterns, even inside `.astro` files.** Astro tolerates JSX-style expressions for compatibility, and they cause problems: `className=`, `htmlFor=`, camelCase handlers like `onClick={…}`, `style={{ … }}` objects, fragments `<>…</>`, `.jsx`/`.tsx` components, helpers that return markup from `.ts`. Use real HTML in `.astro` syntax | `astro-knots` skill (hard prohibition), `references/tech-stack.md` | Yes: a lint pass over `.astro`, `.ts` and `.tsx` files. Models trained on React write these by reflex, so this check will fire most |
 | Two-tier tokens, three modes (light / dark / vibrant), pre-paint mode script | `theme-system`, `Maintain-Themes-Mode-Across-CSS-Tailwind` | Mostly: token names exist, `data-mode` set, no FOUC script missing |
 | A `DESIGN.md` in Google Stitch's spec | `maintain-design-md` | Yes: file exists, frontmatter groups present |
 | Lenient frontmatter schemas, never throw | `YAML-Frontmatter-Parsing-Must-Be-Lenient`, `Rule-to-Assure-Collection-Schema-is-Flexible` | Partly: schema uses preprocessors; build doesn't fail on sample bad frontmatter |
@@ -187,6 +188,12 @@ docs MCP. "Clone this, load these skills, start your agent."
   `lossless-agent-skills`) means this server should *read* them, not copy
   them, or it inherits the drift problem the anchor's AGENTS.md warns
   about.
+- **The JSX check matters most for vibe coding.** Models learned web
+  development mostly from React, so they slip `className`, `style={{}}`
+  and fragments into `.astro` files without being asked. Astro often
+  accepts them, so the build passes and the problem shows up later. A
+  check that catches these, and says what the `.astro` way is, does more
+  for consistency than any instruction.
 - **Astro already covers the framework.** The official docs MCP answers
   "how does Astro do X". Ours only needs to answer "how do *we* do X" and
   "did you do it our way".
