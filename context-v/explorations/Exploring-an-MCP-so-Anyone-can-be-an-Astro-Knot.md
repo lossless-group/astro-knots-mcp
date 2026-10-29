@@ -421,7 +421,7 @@ Consequences:
   Claude Code, `knot-check` in CI everywhere. A server that can't see the
   files can only ask for checks to be run.
 
-## Setup: a Nix flake and direnv
+## Setup: a Nix flake and its dev shell
 
 Decided direction: every Astro Knot gets a **reproducible dev shell**. The
 starter ships a `flake.nix`, and **every command runs inside it with
@@ -432,11 +432,18 @@ person and for their coding agent alike.
 We don't know the person or their computer, so we change as little about
 it as possible:
 
+- `nix develop`, run in the project folder, reads `flake.nix` and opens
+  its dev shell (`devShells.default`): a subshell with every tool the
+  flake lists on the PATH. `exit` leaves it, and the tools are off the
+  PATH again.
+- A person working in a terminal runs `nix develop` once and works
+  inside that shell.
 - The agent runs each command as `nix develop --command <cmd>`
-  (`nix develop --command pnpm dev`, `nix develop --command vitest run`).
-  The environment exists for that command and is gone when it ends.
-- A person who wants to work in a terminal runs `nix develop` and gets a
-  shell with everything in it; `exit` leaves it.
+  (`nix develop --command pnpm dev`, `nix develop --command vitest run`):
+  the same dev shell, opened for that one command and closed when it
+  ends, so no shell is left behind for the agent to lose track of.
+- (`nix shell nixpkgs#<pkg>` is the other "temporary" one: a one-off tool
+  without a flake. The starter doesn't need it.)
 - Nothing edits their shell config (`~/.zshrc`), nothing needs approving
   per folder, and nothing is installed globally. Tools live in
   `/nix/store`, which nothing else on the machine reads; `nix store gc`
