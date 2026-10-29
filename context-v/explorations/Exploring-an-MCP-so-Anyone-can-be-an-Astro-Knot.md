@@ -395,6 +395,78 @@ The same goes for skills: one folder, read by the plugin and served by
 the MCP's `get_skill`. Where that folder lives is tied to
 [[Astro-Knots-Skills-Live-in-Two-Places-and-Will-Diverge]].
 
+## Leaning: a remote MCP, with the coding agent doing the local work
+
+Michael's picture (2026-10-29): a **remote** MCP, and the coding agent
+installs and runs whatever is needed on the person's machine. That splits
+the work cleanly:
+
+| The remote MCP does | The coding agent does, locally |
+|---|---|
+| Serves the skills, blueprints and reminders | Loads them, writes the code |
+| Hands out templates and the starter (`context-v/`, skills, flake) | Writes them into the repo, `direnv allow` |
+| Says which checks apply and how to run them | Runs `npx @lossless-group/knot-check`, `vitest run`, `astro check` |
+| Explains a failed check and the pattern behind it | Fixes it and runs the check again |
+
+Consequences:
+- **The checks run locally, not on the server.** A remote server can't
+  see the person's files, so `knot-check` ships as an npm CLI the agent
+  runs (and as a GitHub Action, and as the plugin's hooks). The MCP's job
+  is to make sure the agent runs it and to explain the results.
+- **Probably no auth at all.** If the remote server only serves our public
+  patterns and templates, and holds nothing of anyone's, it can be
+  authless. That's the easiest kind to add to Claude, ChatGPT or Cursor.
+  Auth only arrives with Option C (hosting people's sites).
+- **The guarantee comes from local tooling, not the server**: hooks in
+  Claude Code, `knot-check` in CI everywhere. A server that can't see the
+  files can only ask for checks to be run.
+
+## Setup: a Nix flake and direnv
+
+Decided direction: every Astro Knot gets a **reproducible dev shell**. The
+starter ships `flake.nix` and `.envrc` (`use flake`), so `direnv allow`
+puts every command-line tool on the PATH at pinned versions, for the
+person and for their coding agent alike.
+
+**What goes in it**, from what our skills actually call:
+
+| Tool | Why |
+|---|---|
+| `nodejs_22`, `pnpm` | Build and run the site |
+| `imagemagick` | Resize, convert and compress images (`prep-images-for-embed`, OG images) |
+| `ghostscript` | Shrink and normalize PDFs (decks, datarooms) |
+| `ffmpeg` | PNG→JPEG for share images, video posters |
+| `exiftool` | Strip location and camera metadata from photos |
+| `libwebp` | `cwebp`, where WebP is still wanted |
+| `gh`, `git`, `jq`, `yq` | Repos, PRs, JSON and YAML frontmatter |
+| `python3` | The context-vigilance-kit's frontmatter check needs it |
+
+Left out on purpose, following the root flake's `js` aspect: Playwright's
+browsers (huge, and they don't run on NixOS; use a system browser).
+
+**Precedent, and the catch.** The root of our tree already has this
+pattern: `flake.nix` exports composable aspects (`js`, `py`, `machine`,
+…), and `templates/project/` shows a project choosing aspects in a few
+lines. But `lossless-monorepo` is **private**, so a site outside our tree
+can't import it. Options:
+
+1. **A self-contained flake in the starter.** Works for anyone today;
+   drifts from ours over time.
+2. **Publish the aspects somewhere public**, for instance this repo
+   exporting an `astro-knot` flake module (with a new `media` aspect for
+   the image and PDF tools). Starters import it in five lines and get
+   updates with `nix flake update`.
+
+Leaning: 1 for the first version, 2 once the tool list settles.
+
+**Two follow-ons:**
+- **Make the skills portable.** `generate-consistent-og-images` uses
+  macOS's `sips` and `qlmanage`, which don't exist on Linux or in a Nix
+  shell. With ImageMagick in the flake, the skills should prefer it.
+- **Without Nix.** Not everyone will install Nix. The flake doubles as
+  the list of what's needed: `knot-check` warns about any missing tool,
+  and the agent can install it another way (Homebrew, apt).
+
 ## What else to consider when building an MCP or a plugin
 
 - **Local or remote.** A local MCP (stdio, started with `npx`) can read
