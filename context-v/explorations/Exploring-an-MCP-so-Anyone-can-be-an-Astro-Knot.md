@@ -19,7 +19,7 @@ tags:
   - MCP
   - Vibe-Coding
   - Guardrails
-status: Open
+status: Parked
 site_uuid: 1560bc57-5488-42d5-b2f8-e30c132663c7
 hex_code: owcbcd
 summary: >-
@@ -32,6 +32,15 @@ summary: >-
 ---
 
 # Exploring an MCP so Anyone can be an Astro Knot
+
+> **Parked 2026-10-29.** A long-held idea, thought through in one sitting.
+> Decided so far: who it's for (non-developers with a coding agent), what
+> every site must get (Vitest TDD, LFM, no React/JSX) and should get
+> (Context Vigilance), where skills live, MCP and plugin from one repo, and
+> `nix develop` for setup. To pick it back up, start at
+> [Questions to answer before a spec](#questions-to-answer-before-a-spec):
+> 3 (which starter), 4 (whose GitHub/Cloudflare), and 8 (what success is)
+> decide the spec. Nothing is built yet.
 
 ## The question
 
@@ -618,7 +627,7 @@ The tool-to-package mapping for each manager belongs in `knot-check`'s
 
 ## Outcome
 
-(Open. Fill in when this ends: a link to the spec it produced, or "decided
+(Parked 2026-10-29, not ended. Fill in when this ends: a link to the spec it produced, or "decided
 not to pursue, and why".)
 
 ## Related
