@@ -340,6 +340,106 @@ Layered, so each layer is useful before the next exists:
 
 Still open; this is a lean, not a decision.
 
+## Both an MCP and a plugin, from one repo
+
+Wanted: ship astro-knots-mcp as an **MCP server** (works in any client)
+and as a **Claude Code plugin** (skills, commands and hooks on top), and
+keep both in this repo.
+
+That works, because a Claude Code plugin can bundle MCP servers. Our
+`context-vigilance-kit` is the precedent for the plugin half: a
+`.claude-plugin/plugin.json`, a `marketplace.json` so it installs straight
+from the GitHub repo, `"skills"` pointed at a folder of our choosing, and
+a `hooks/` folder.
+
+### What each half is for
+
+| | MCP server | Claude Code plugin |
+|---|---|---|
+| Reaches | Claude (web, desktop), Claude Code, Codex, Cursor, ChatGPT, anything that speaks MCP | Claude Code only |
+| Gives | Tools (`knot_check`, `new_site`, `add_component`, `get_skill`…), prompts | Skills that load themselves, slash commands (`/knot:new`, `/knot:check`), **hooks**, and the MCP server, wired up |
+| Enforces through | Tool design: test first, gated publish, constrained inputs | Hooks as well: they run on every edit, whether or not the model calls a tool |
+
+**Hooks are the strongest guardrail we have, in Claude Code.** A
+`PostToolUse` hook on edits to `.astro` files can run the JSX-pattern
+check and hand the failure straight back to the model. A `PreToolUse`
+hook can refuse to add `react` as a dependency. The MCP can only check
+when it's asked; a hook checks every time. Other clients get the same
+checks, but only through the MCP's tools and in CI.
+
+### One repo, one core
+
+```
+astro-knots-mcp/
+├── .claude-plugin/
+│   ├── plugin.json           # the plugin: skills, commands, hooks, MCP
+│   └── marketplace.json      # installable straight from GitHub
+├── .mcp.json                 # how the plugin starts the MCP server
+├── packages/
+│   ├── knot-check/           # THE CORE: the guardrail checks, a library + CLI
+│   └── mcp/                  # the MCP server (stdio for local use; maybe a
+│                             #   remote Worker entry later for chat clients)
+├── agent-skills/             # skills both halves serve (see the corpus issue)
+├── commands/                 # /knot:* slash commands (plugin only)
+├── hooks/                    # call knot-check on edits (plugin only)
+├── templates/                # starter sites, extracted from real ones
+├── action.yml                # knot-check as a GitHub Action, for CI
+├── context-v/  changelog/  splash/
+└── README.md, LICENSE, NOTICE
+```
+
+The rule that keeps it maintainable: **every guardrail lives once, in
+`packages/knot-check/`.** The MCP tool, the plugin hook, the slash command
+and the GitHub Action all call it. They differ only in when they run.
+The same goes for skills: one folder, read by the plugin and served by
+the MCP's `get_skill`. Where that folder lives is tied to
+[[Astro-Knots-Skills-Live-in-Two-Places-and-Will-Diverge]].
+
+## What else to consider when building an MCP or a plugin
+
+- **Local or remote.** A local MCP (stdio, started with `npx`) can read
+  and write the person's files and run `vitest` and `astro check`; that's
+  what Option B needs. A remote MCP (HTTP on a Worker) is the only kind
+  that chat apps can use, but it can't touch a local folder. We probably
+  ship local first and add remote for the knowledge tools.
+- **Auth, for anything remote.** Claude's custom connectors expect OAuth
+  (or no auth). event-hog's key-in-the-URL works, but the URL is the
+  password; hubspot-mcp-wrap's OAuth front door is the better precedent.
+  A local server needs none.
+- **Tools are prompts.** The model chooses tools by their names and
+  descriptions, and every tool's definition costs context in every chat.
+  Fewer, task-shaped tools (`add_component`, not `write_file` plus five
+  helpers), descriptions that say when to use them and when not, outputs
+  short enough to read, and errors that say how to fix the problem.
+- **Enforced versus asked.** Write down, for each rule, whether a tool or
+  hook guarantees it or an instruction only asks for it, as event-hog's
+  README does. That list is what a reviewer checks.
+- **Safety of a server that writes and runs things.** Keep writes inside
+  the project folder, never echo secrets (`.env`), treat fetched content
+  (a client's website, a design file) as data rather than instructions,
+  and confirm before anything destructive or public (deploys, new repos).
+- **Works across clients.** Skills follow the Agent Skills spec, so any
+  harness can read them. Slash commands and hooks are Claude Code only;
+  everything essential has to be reachable through the MCP's tools too,
+  or Codex and Cursor users get a weaker product.
+- **Versions and updates.** The plugin and the MCP package should share
+  one version number and one changelog. A plugin pins the MCP version it
+  starts, so they can't drift apart. Updates have to reach people: a
+  marketplace update for the plugin, a new npm version for `npx`.
+- **Testing, in three layers.** Vitest unit tests for each check and each
+  tool (our own TDD rule applies to us first); the MCP Inspector for
+  protocol behaviour; and evals, "given this request, does the model call
+  the right tool and does the site pass `knot_check`?". Claude Code has
+  `claude plugin eval` for plugin eval suites.
+- **Distribution.** npm for the MCP package, the GitHub repo as the
+  plugin marketplace, a listing in MCP registries later. The splash
+  explains both installs, the way context-v.dev does.
+- **License, data and trust.** Apache-2.0 with a NOTICE, like event-hog.
+  A local server sends nothing anywhere, which is worth saying plainly; a
+  remote one needs a data policy.
+- **Observability.** For a local tool, none by default. For a remote
+  one, enough logging to debug, and no content from people's sites.
+
 ## Questions to answer before a spec
 
 1. **Who is the first "anyone"?** A developer friend in Claude Code, a
