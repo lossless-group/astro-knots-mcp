@@ -466,6 +466,48 @@ To decide when it's built: one flake for every site, or a flake that
 takes options (with or without the media tools, say). Leaning: one, kept
 small, until a site needs otherwise.
 
+### Bootstrap: getting Nix and direnv onto the machine
+
+Homebrew can't be part of the flake: Nix *is* the package manager there,
+and it installs the site's tools itself. The machine's own package
+manager has two smaller jobs: getting **Nix and direnv** installed once,
+and being the **fallback** when Nix isn't allowed. The coding agent does
+all of it; the person only approves.
+
+**Step 0, the agent works out the OS.** `uname -s` (Darwin or Linux); on
+Linux, the `ID` and `ID_LIKE` lines of `/etc/os-release`; on Windows,
+it's running in PowerShell or inside WSL.
+
+| OS | Package manager | Bootstrap |
+|---|---|---|
+| **macOS** | **Homebrew** (not built in). Install: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`; it asks for Xcode's Command Line Tools first | Nix via the Determinate Systems installer, then `brew install direnv` |
+| **Debian, Ubuntu, Mint, Pop!_OS** | `apt` | Nix via the installer, then `sudo apt install direnv` |
+| **Fedora, RHEL, CentOS** | `dnf` | same, `sudo dnf install direnv` |
+| **Arch, Manjaro** | `pacman` | same, `sudo pacman -S direnv` |
+| **openSUSE** | `zypper` | same, `sudo zypper install direnv` |
+| **Windows** | **winget** (built into Windows 10 and 11) | `wsl --install` gives a Linux (Ubuntu by default), then follow the Ubuntu row inside it. Nix doesn't run on Windows itself |
+
+The Nix installer is the same everywhere it runs (macOS, Linux, WSL):
+`curl -fsSL https://install.determinate.systems/nix | sh -s -- install`.
+
+**Then, once:** hook direnv into the shell (`eval "$(direnv hook zsh)"`
+in `~/.zshrc`, or `bash` in `~/.bashrc`), open the site's folder, and
+`direnv allow`. From then on, entering the folder loads the site's tools
+and leaving it unloads them.
+
+Alternative worth testing: skip the OS package manager for direnv too,
+with `nix profile install nixpkgs#direnv`. Then Homebrew is only needed on
+a Mac for the no-Nix fallback.
+
+**The no-Nix fallback** uses the same managers to install the tools in
+the flake's table directly: Homebrew on macOS, the distro's manager on
+Linux, winget on Windows (the agent finds exact IDs with `winget search`).
+It works, but tools land globally, so the no-collisions promise is gone.
+`knot-check` should say so when it detects this mode.
+
+The tool-to-package mapping for each manager belongs in `knot-check`'s
+"doctor" output, not in this doc, so there's one list to keep current.
+
 **Two follow-ons:**
 - **Make the skills portable.** `generate-consistent-og-images` uses
   macOS's `sips` and `qlmanage`, which don't exist on Linux or in a Nix
