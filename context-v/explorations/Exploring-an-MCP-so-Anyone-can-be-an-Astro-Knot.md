@@ -1,5 +1,6 @@
 ---
 title: "Exploring an MCP so Anyone can be an Astro Knot"
+type: Explorations
 lede: "Our sites follow patterns honed across twenty builds. Could an MCP hand those patterns, and their guardrails, to anyone vibe coding a site?"
 publish: false
 date_created: 2026-10-29
@@ -11,7 +12,7 @@ authors:
   - Michael P. Staton
 augmented_with:
   - Claude Code on Claude Opus 5.5 (1M context)
-at_semantic_version: 0.0.0.1
+at_semantic_version: 0.0.1.0
 tags:
   - Exploration
   - Astro-Knots
@@ -87,6 +88,63 @@ right-hand column is the important one.
 
 The first finding: **most of our guardrails are mechanical.** That makes a
 deterministic checker the most valuable single piece of any option below.
+
+## Decided: what every Astro Knot gets
+
+Three tiers. `knot_check` **fails** on the first, **warns** on the second,
+and can only prompt for the third.
+
+### Required (enforced)
+
+- **Test-driven, with Vitest.** Vitest runs on Vite, which Astro is built
+  on, so it works out of the box: `vitest.config.ts` with
+  `getViteConfig()` from `astro/config`, and Astro's Container API to
+  render `.astro` components to HTML in a test. Tests cover the parts that
+  break quietly: content loaders and their lenient schemas, LFM output,
+  utilities, and rendered components.
+  - *Checked:* Vitest is configured, `vitest run` passes, and there are
+    tests for loaders, schemas and components.
+  - *Imposed by the tools, not only checked:* in Options B and C, a tool
+    that adds something (`add_component`, `add_collection`, `add_page`)
+    writes the **failing test first**, then the implementation, and is
+    only done when the test passes. The MCP's tool order is the red-green
+    loop, so TDD doesn't depend on the model remembering to do it.
+  - Prior notes: the astro-knots spec `Maintain-a-Rigorous-Test-Suite`
+    (status Idea) and the CI blueprint's `test.yml` shape.
+- **LFM (Lossless Flavored Markdown)** for all markdown content.
+  `@lossless-group/lfm` is a dependency, content collections render
+  through its pipeline, and callouts, citations and extended code fences
+  work.
+  - *Checked:* the package is present and wired, and a fixture document
+    with a callout, a citation and a diagram fence renders as expected
+    (itself a Vitest test the template ships with).
+- Everything in the table above marked "Yes", **especially no React and
+  no JSX patterns**.
+
+### Highly recommended (non-strict)
+
+- **Context Vigilance**, from [context-v.dev](https://context-v.dev/)
+  (the `context-vigilance-kit` repo). A new site starts with the kit's
+  **starter `context-v/`**: the folders, an `index.md` per folder, an
+  `AGENTS.md` pointer, and a `changelog/`. The MCP pulls the starter from
+  the kit at scaffold time rather than carrying its own copy, so new sites
+  get the current version. People who use Claude Code can add the kit as
+  a plugin (`/plugin install cv@context-vigilance-kit`) and get its
+  commands, like `/cv:explore` and `/cv:reflect`.
+- **The skills that go with it:** `changelog-conventions` (an entry for
+  every meaningful change), `git-conventions` (structured commit
+  messages), plus `maintain-design-md`, `theme-system`,
+  `lossless-flavored-markdown`, `open-graph-share-seo-geo` and
+  `maintain-splash-pages` where they apply.
+  - *Checked as warnings:* `context-v/` exists with indexes, a changelog
+    entry is newer than the last meaningful commit, and commit headers
+    follow the convention. Each warning says how to fix it, and none
+    blocks a publish.
+
+### Taste (prompted for, never enforced)
+
+Design posture, voice, divergence from sibling sites. A design-review
+step can ask for it; no check can decide it.
 
 ## Options
 
@@ -212,8 +270,9 @@ docs MCP. "Clone this, load these skills, start your agent."
 Layered, so each layer is useful before the next exists:
 
 1. **`knot_check`** as a standalone package and a GitHub Action: the
-   mechanical guardrails from the table, each failure linked to the
-   pattern that explains it. Run it on our own sites first; where it
+   mechanical guardrails from the table, with two levels (fail for the
+   required tier, warn for the recommended one), each finding linked to
+   the pattern that explains it. `vitest run` is one of its checks. Run it on our own sites first; where it
    fails on a site we like, the rule or the site is wrong.
 2. **Option A's knowledge tools**, reading skills and blueprints live
    from their repos.
@@ -229,8 +288,10 @@ Still open; this is a lean, not a decision.
 1. **Who is the first "anyone"?** A developer friend in Claude Code, a
    client's marketing lead in Claude, or a stranger on the internet? It
    decides between B and C.
-2. **How rigid?** Must a site pass every check to count as an Astro Knot,
-   or are there core rules and optional ones?
+2. ~~**How rigid?**~~ Partly answered: required (Vitest TDD, LFM, the
+   mechanical stack rules), highly recommended (Context Vigilance and its
+   skills), taste. Still open: which of the remaining "Yes" rows are
+   required and which are recommended (search by default? OG images?).
 3. **Which site is the template?** One canonical starter, or several
    (content site, splash, deck, portfolio)?
 4. **Where do their sites live and deploy?** Their GitHub and their
