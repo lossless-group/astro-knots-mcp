@@ -34,7 +34,7 @@ pnpm dlx --package=github:lossless-group/astro-knots-mcp knot-check . --full
 |---|---|
 | `knot-check [dir]` | Banned frameworks, JSX patterns in `.astro`, `.jsx`/`.tsx` files, `workspace:` links, LFM installed and used, Vitest set up |
 | `knot-check [dir] --full` | Also runs `vitest run`, `astro check` and the build, then checks `dist/` |
-| `knot-check dist [dir]` | Built pages: exactly one `og:image` with its six tags, `twitter:` tags, absolute URLs, the image file matching its declared size and type, canonical, sitemap, `robots.txt`, `llms.txt`. Skips `noindex` pages |
+| `knot-check dist [dir]` | Built pages: every content page has a body (no title over an empty page), exactly one `og:image` with its six tags, `twitter:` tags, absolute URLs, the image file matching its declared size and type, canonical, sitemap, `robots.txt`, `llms.txt`. Skips `noindex` pages |
 | `knot-check share <url>` | Fetches a live page as iMessage, WhatsApp, Telegram, X, LinkedIn, Facebook, Slack, Discord and a browser, and shows the card each gets |
 | `knot-check doctor` | Node, pnpm, `IDEOGRAM_API_KEY` |
 

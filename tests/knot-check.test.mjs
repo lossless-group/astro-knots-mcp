@@ -72,6 +72,15 @@ describe("project", () => {
     expect(rules(checkProject(unwired))).toEqual(["lfm-unwired"]);
   });
 
+  it("warns when a CodeBlock doesn't use LFM's highlighter", () => {
+    const pkg = { dependencies: { "@lossless-group/lfm": "x" }, devDependencies: { vitest: "x" } };
+    const base = { "vitest.config.ts": "", "src/lib/markdown.ts": "import { parseMarkdown } from '@lossless-group/lfm';" };
+    const plain = checkProject(site(pkg, { ...base, "src/components/markdown/CodeBlock.astro": "<pre><code>{code}</code></pre>" }));
+    expect(rules(plain)).toContain("code-unhighlighted");
+    const colored = checkProject(site(pkg, { ...base, "src/components/markdown/CodeBlock.astro": "---\nimport { highlightCode } from '@lossless-group/lfm/highlight';\n---" }));
+    expect(rules(colored)).not.toContain("code-unhighlighted");
+  });
+
   it("passes a site that follows the patterns, and flags a .tsx component", () => {
     const good = {
       "vitest.config.ts": "",
@@ -218,6 +227,16 @@ describe("built site: share and SEO", () => {
     writeFileSync(join(d, "robots.txt"), "User-agent: *\n");
     const f = checkDist(d);
     expect(rules(f)).toEqual(expect.arrayContaining(["twitter-tags", "canonical", "robots"]));
+  });
+
+  it("fails a page whose article shows a header over an empty body: the splash bug", () => {
+    const empty = head().replace(
+      "<body></body>",
+      '<body><main><article><header><p>Specs</p><h1>A Two-Perspective How-To Engine</h1><p>VCs arrive two ways, and this lede is long enough to pass for content on its own.</p></header><div class="prose"></div></article></main></body>',
+    );
+    expect(rules(checkDist(dist(empty)))).toEqual(["empty-article-body"]);
+    const full = empty.replace('<div class="prose"></div>', `<div class="prose"><p>${"word ".repeat(40)}</p></div>`);
+    expect(checkDist(dist(full))).toEqual([]);
   });
 
   it("skips noindex pages (brand kit, design system, OG render targets)", () => {

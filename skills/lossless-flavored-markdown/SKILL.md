@@ -130,16 +130,42 @@ For the full directive form (`:text-directive`, `::leaf-directive`, `:::containe
 - **Reserved attribute overrides.** `format`, `type`, and a few others are component-managed and silently ignored when set on `::leaf-directive`s. See [references/extensibility.md](references/extensibility.md) for the full list.
 - **OG fetch timeouts ≥ 10s in CI.** A single unreachable URL stalls the whole build. Keep `timeout: 5000`.
 
+## Rendering: the hard rules
+
+Every site renders LFM content the same way. These are not options:
+
+1. **Bodies go through LFM, never Astro's `render()` alone.** Parse with
+   `parseMarkdown(entry.body)` and render the tree with `AstroMarkdown.astro`
+   (plus `Sources.astro` for `tree.data.citations.ordered`). A custom content
+   loader's `store.set({ id, data, body })` stores no HTML, so
+   `render(entry)` builds cleanly and publishes **a title over an empty
+   page**. This shipped on the astro-knots splash for months (2026-11-09).
+2. **Code blocks are colored by LFM's highlighter.** Astro's built-in Shiki
+   never sees LFM content. In `CodeBlock.astro`:
+   `import { highlightCode } from '@lossless-group/lfm/highlight'` and
+   render `<pre><code set:html={await highlightCode(code, language)} /></pre>`.
+   The default palette follows light, dark and vibrant; brand it with
+   `--lfm-code-token-*` variables. Sit the block on the page's own background,
+   never a fixed dark panel. (LFM 0.7.0+.)
+3. **Copy the components from `astro-knots/packages/lfm-astro/components/`**,
+   the canonical source, not from another site.
+4. **Check the output, not the status code.** A 200 doesn't prove a page
+   rendered. `knot-check dist` fails a page whose article has nothing after
+   its header (`empty-article-body`) and warns on a `CodeBlock` that skips
+   the highlighter (`code-unhighlighted`).
+
 ## Quick install (JSR — recommended path)
 
 ```bash
 # In any Astro Knots (or other) site:
-pnpm dlx jsr add @lossless-group/lfm
-pnpm dlx jsr add @lossless-group/lfm-astro
+echo "@jsr:registry=https://npm.jsr.io" >> .npmrc
+pnpm add @lossless-group/lfm@npm:@jsr/lossless-group__lfm@^0.7.0 mdast-util-to-string
 
-# Then in astro.config.mjs:
-import lfm from '@lossless-group/lfm-astro';
-export default defineConfig({ integrations: [lfm()] });
+# Then copy the renderer components (there's no published integration yet;
+# @lossless-group/lfm-astro is not on JSR):
+mkdir -p src/components/markdown
+cp <astro-knots>/packages/lfm-astro/components/*.astro \
+   <astro-knots>/packages/lfm-astro/components/callout* src/components/markdown/
 ```
 
 JSR needs no auth tokens — clone-and-`pnpm install` works for any contributor. For the GitHub Packages mirror (internal-only), the local-development workflow when modifying LFM itself, full `remarkLfm` options, and the trigger-map override pattern, see [references/package-and-setup.md](references/package-and-setup.md).

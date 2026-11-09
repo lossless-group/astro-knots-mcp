@@ -79,6 +79,13 @@ export const RULES = {
     fix: "Render markdown with parseMarkdown() from @lossless-group/lfm and the AstroMarkdown component.",
     pattern: "lossless-flavored-markdown",
   },
+  "code-unhighlighted": {
+    level: "warn",
+    title: "Code blocks render in one color",
+    why: "Astro's built-in Shiki never sees LFM content: it goes LFM -> MDAST -> AstroMarkdown -> CodeBlock. LFM's own highlighter has to be called there.",
+    fix: "In CodeBlock.astro: import { highlightCode } from '@lossless-group/lfm/highlight' and render <pre><code set:html={await highlightCode(code, language)} /></pre>. Copy packages/lfm-astro/components/CodeBlock.astro.",
+    pattern: "lossless-flavored-markdown",
+  },
   "vitest-missing": {
     level: "error",
     title: "Vitest isn't set up",
@@ -188,6 +195,13 @@ export const RULES = {
     why: "WebP previews are silently dropped by iMessage and WhatsApp.",
     fix: "Export the banner as JPEG (ffmpeg -i in.webp out.jpg).",
     pattern: "open-graph-share-seo-geo",
+  },
+  "empty-article-body": {
+    level: "error",
+    title: "A page shows its header over an empty body",
+    why: "Usually content from a custom loader passed to Astro's render(): the loader stores raw markdown and no HTML, so render() builds cleanly and returns nothing.",
+    fix: "Render the body through LFM: const tree = await parseMarkdown(entry.body), then <AstroMarkdown node={tree} /> (and <Sources citations={...} /> for citations).",
+    pattern: "lossless-flavored-markdown",
   },
   canonical: {
     level: "error",

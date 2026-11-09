@@ -186,6 +186,11 @@ export function checkProject(root) {
     if (!uses) findings.push({ rule: "lfm-unwired" });
   }
 
+  for (const cb of walk(src, (p) => /(^|\/)CodeBlock\.(astro|svelte)$/.test(p))) {
+    const text = readFileSync(cb, "utf8");
+    if (!/@lossless-group\/lfm\/highlight|\bshiki\b/.test(text)) findings.push({ rule: "code-unhighlighted", file: relative(root, cb) });
+  }
+
   const vitestConfig = readdirSync(root).some((n) => /^vitest\.config\.(ts|mts|js|mjs)$/.test(n));
   if (!deps.vitest || !vitestConfig) {
     findings.push({ rule: "vitest-missing", detail: !deps.vitest ? "vitest isn't a dependency" : "no vitest.config.ts" });
@@ -227,6 +232,23 @@ export function shareInfo(html) {
     twitterCard: prop(tags, "twitter:card")[0],
     canonical: tags.find((t) => t.tag === "link" && t.rel === "canonical")?.href,
   };
+}
+
+/**
+ * Words in the page's main <article> (the one holding its <h1>) once its own
+ * <header> and <footer> are taken out, or null when there's no such article.
+ * A content page whose body didn't render shows a title and tags in the
+ * header and nothing after it. Cards and demos (articles without the page's
+ * h1) aren't judged.
+ */
+export function articleBodyWords(html) {
+  const main = [...html.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/gi)].find((m) => /<h1\b/i.test(m[1]));
+  if (!main) return null;
+  const body = main[1]
+    .replace(/<(script|style|header|footer|nav)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ");
+  return body.split(/\s+/).filter((w) => /\w/.test(w)).length;
 }
 
 /** Real pixel size and type of a JPEG or PNG, from its bytes. */
@@ -290,6 +312,9 @@ export function checkDist(dist) {
     if (relativeUrls.length) findings.push({ rule: "absolute-urls", file, detail: relativeUrls.join(", ") });
 
     if (s.ogImages.length === 1 && s.shape === "wide") findings.push({ rule: "share-not-tall", file });
+
+    const words = articleBodyWords(readFileSync(page, "utf8"));
+    if (words !== null && words < 5) findings.push({ rule: "empty-article-body", file, detail: `${words} words after the header` });
 
     const img = s.ogImages[0];
     if (img && !checkedImages.has(img)) {

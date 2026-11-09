@@ -79,11 +79,17 @@ Then, loading the matching skill before each part:
 |---|---|
 | Stack rules: Astro pages, Svelte only for interactivity, no React or JSX | `astro-knots` |
 | `vitest.config.ts` with `getViteConfig()` from `astro/config`, tests beside the code | `astro-knots` |
-| Markdown content rendered through LFM (`parseMarkdown` and `AstroMarkdown`) | `lossless-flavored-markdown` |
+| Markdown content rendered through LFM (`parseMarkdown` and `AstroMarkdown`), code colored by `@lossless-group/lfm/highlight`, components copied from `packages/lfm-astro/components/` | `lossless-flavored-markdown` (its "Rendering: the hard rules") |
 | `DESIGN.md` from what they told you in step 0 | `maintain-design-md` |
 | Two-tier tokens and three modes (light, dark, vibrant), pre-paint mode script | `theme-system` |
 | One `MetaTags` component, an SEO registry, sitemap, `robots.txt`, `llms.txt` | `open-graph-share-seo-geo` |
 | Share banners: tall (1200x1600) **and** wide (1200x630), JPEG | `generate-consistent-og-images` |
+
+**Content renders through LFM, always.** Never hand a markdown body to
+Astro's `render()` alone: a custom loader stores no HTML, so the page builds
+and shows a title over nothing. Parse with `parseMarkdown`, render with
+`AstroMarkdown`, color code with `highlightCode`. Then open a built page and
+confirm its body has text; `knot-check dist` fails one that doesn't.
 
 **The design system: spike, then refactor.** For anything creative (a new
 page, a new feature, a redesign), build it freely first, without worrying

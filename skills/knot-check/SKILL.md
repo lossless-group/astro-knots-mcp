@@ -11,7 +11,7 @@ Run it from the site's folder:
 |---|---|
 | `knot-check .` | Source: banned frameworks, JSX patterns in `.astro`, `workspace:` links, LFM, Vitest |
 | `knot-check . --full` | All of that, then runs `vitest run`, `astro check` and the build, then checks `dist/` |
-| `knot-check dist .` | The built pages: one `og:image` each, its six tags, `twitter:` tags, absolute URLs, the image file matching its tags, canonical, sitemap, `robots.txt`, `llms.txt` |
+| `knot-check dist .` | The built pages: every content page has a body (not a title over nothing), one `og:image` each, its six tags, `twitter:` tags, absolute URLs, the image file matching its tags, canonical, sitemap, `robots.txt`, `llms.txt` |
 | `knot-check share <url>` | Fetches a deployed page as iMessage, WhatsApp, X, LinkedIn, Facebook, Slack, Discord and a browser, and shows which card each one gets |
 | `knot-check doctor` | Node, pnpm, and whether `IDEOGRAM_API_KEY` is set |
 
