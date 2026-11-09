@@ -1,0 +1,111 @@
+# ─── Imagery — Ideogram API recipe ─────────────────────────────────────
+# Drop this block into the project's DESIGN.md frontmatter, AFTER the
+# `components:` block and BEFORE the closing `---`.
+#
+# Adapt the three project-specific fields marked with ★. Everything else
+# is intentionally project-agnostic — copy verbatim.
+#
+# Project-agnostic by design:
+#   - defaults.style_type        AUTO            (REQUIRED when style_reference_images
+#                                                is set — DESIGN/REALISTIC/FICTION are
+#                                                rejected by the v3 API in that case)
+#   - defaults.magic_prompt      OFF             (no prompt rewriting → consistency)
+#   - defaults.rendering_speed   QUALITY         (TURBO only when iterating)
+#   - negative_prompt            ~12 tokens      (any more dilutes attention; the
+#                                                last few are anti-failure-mode:
+#                                                "subject in top half" etc.)
+#   - aspect_ratios              six entries     (cross-project vocabulary)
+#   - prompt.forbid              brand vocab     (locked channels handle this)
+#
+# Project-specific:
+#   ★ style_reference.path       (the project's canonical hero/banner image)
+#   ★ color_palette.members      (mapped from project's DESIGN.md `colors:` tokens)
+#   ★ defaults.seed              (any fixed integer; bump only when canon shifts)
+
+imagery:
+  provider: ideogram
+  endpoint: POST https://api.ideogram.ai/v1/ideogram-v3/generate
+  content_type: multipart/form-data
+
+  # ── Locked defaults — DO NOT vary per request ──────────────────────
+  defaults:
+    style_type: AUTO              # REQUIRED when style_reference_images is set.
+                                  # The v3 API rejects DESIGN/REALISTIC/FICTION
+                                  # when a reference image is uploaded — those
+                                  # are mutually exclusive. The reference image
+                                  # carries the aesthetic anyway.
+    magic_prompt: OFF             # disables Ideogram's prompt-rewriter;
+                                  # rewriting is the #1 source of drift
+                                  # across "identical" requests
+    rendering_speed: QUALITY      # use TURBO only when iterating prompts
+    seed: 1138                    # ★ project-specific canonical seed;
+                                  # any fixed integer is fine — bump only
+                                  # when the visual canon itself shifts
+
+  # ── Locked negative prompt — exclude this from every generation ───
+  # Short on purpose. Each token competes with the positive prompt for
+  # attention; long negatives dilute hard composition asks. The last
+  # block (saturated / rainbow / vibrant / oversized subject / subject
+  # in top half) is anti-failure-mode — added after observed drift in
+  # earlier runs. "subject in top half" specifically defends the SVG
+  # overlay zone in tall aspect ratios.
+  negative_prompt: >-
+    text, typography, lettering, logos, watermarks, central subject
+    filling frame, photorealistic human faces, saturated, rainbow,
+    vibrant, oversized subject, subject in top half
+
+  # ── Locked color palette — ★ map from project's `colors:` tokens ───
+  # Sum of weights does not need to equal 1; Ideogram reads weights as
+  # relative emphasis. Weight surface-base highest (0.4–0.5) so the
+  # canvas dominates; weight accents lower so they read as accents.
+  color_palette:
+    members:
+      - { color_hex: "#XXXXXX", color_weight: 0.45 }    # surface-base
+      - { color_hex: "#XXXXXX", color_weight: 0.20 }    # primary accent
+      - { color_hex: "#XXXXXX", color_weight: 0.15 }    # primary-soft / secondary
+      - { color_hex: "#XXXXXX", color_weight: 0.10 }    # tertiary accent
+      - { color_hex: "#XXXXXX", color_weight: 0.10 }    # subject / on-surface tone
+
+  # ── Locked style reference — uploaded as style_reference_images ───
+  # The strongest consistency signal in the v3 API. Every request
+  # uploads this file; texture, lighting, atmosphere are inherited.
+  # ★ Point at the project's canonical banner. If none exists yet,
+  # generate one with just color_palette + style_type=AUTO, save it,
+  # then point this field at it.
+  style_reference:
+    path: public/ogimage__{Project-Name}--Default.png
+    mime: image/png
+
+  # ── Aspect ratio enum — pick one per request ──────────────────────
+  # Names are cross-project canon; Ideogram values match the v3 enum.
+  # Lossless ships WhatsApp / iMessage first — banner_tall is a
+  # first-class deliverable, not a secondary variant.
+  aspect_ratios:
+    banner: 16x9                  # OG / Twitter / Slack / generalized share
+    portrait: 4x5                 # LinkedIn portrait, Instagram feed
+    portrait_tall: 9x16           # Stories, Reels, TikTok
+    square: 1x1                   # avatars, square unfurls, fallbacks
+    banner_tall: 3x4              # WhatsApp / iMessage previews (Lossless default tall)
+    banner_tall_max: 2x3          # dramatic-tall variant
+
+  # ── Prompt convention — the ONLY free-text per request ──────────────
+  # Constraints documented in the SKILL.md prose. The `pattern` here is
+  # the empirical empty-space-first structure: subject-first prompts let
+  # the subject grow into the SVG overlay zone (observed in iter1/iter2
+  # of the Perplexed OG run). Two clauses separated by a period:
+  #   1. Empty region declared as first-class subject with concrete
+  #      content ("dark gradient sky" — model has to render it).
+  #   2. Subject zone — "Bottom 2/3 contains {actual subject}."
+  # Use explicit numeric proportions, never soft terms ("lower portion").
+  prompt:
+    pattern: "Top 1/3 of frame is empty negative space, {empty_region_content}. Bottom 2/3 contains {subject}."
+    max_chars_recommended: 220    # empirical ceiling for hard-ask survival
+    forbid:
+      # Vocabulary that belongs in tokens, NOT in the prompt:
+      - brand names
+      - color names ("cyan", "dark", "warm")
+      - aesthetic adjectives ("vibrant-minimal", "build-in-public")
+      - texture descriptors ("paper-cut", "isometric", "atmospheric")
+      # All of the above are already locked via style_reference_images,
+      # color_palette, and style_type. Repeating them in the prompt only
+      # dilutes the model's attention budget for the actual subject.

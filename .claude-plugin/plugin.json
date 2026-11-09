@@ -1,0 +1,12 @@
+{
+  "name": "astro-knots",
+  "displayName": "Astro Knots",
+  "description": "Build an Astro website with your agent, following The Lossless Group's Astro Knots patterns: skills for the stack, theming, markdown and share images, plus a check on every edit that catches React and JSX habits.",
+  "version": "0.1.0",
+  "author": { "name": "The Lossless Group", "url": "https://github.com/lossless-group" },
+  "homepage": "https://lossless-group.github.io/astro-knots/",
+  "repository": "https://github.com/lossless-group/astro-knots-mcp",
+  "license": "Apache-2.0",
+  "keywords": ["astro", "svelte", "website", "agent-skills", "opengraph", "seo"],
+  "skills": "./skills/"
+}

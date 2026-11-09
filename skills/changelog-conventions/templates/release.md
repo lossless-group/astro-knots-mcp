@@ -1,0 +1,77 @@
+---
+site_uuid: 65485c7b-2f1c-4811-86ea-503a7b6fa577   # REGENERATE: uuidgen | tr 'A-Z' 'a-z' — never type one by hand
+hex_code: qpifps                    # REGENERATE: LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c6
+date_authored_initial_draft: YYYY-MM-DD
+date_authored_current_draft: YYYY-MM-DD
+# When the WORK happened, as opposed to when this was written. Optional.
+# date_work_started: YYYY-MM-DD
+# date_work_completed: YYYY-MM-DD
+date_first_published: YYYY-MM-DD
+date_created: YYYY-MM-DD
+date_modified: YYYY-MM-DD
+title: "PRODUCT vX.Y.Z — Release Title"
+lede: "What this release does in one attention-grabbing sentence"
+summary: "Optional, agent-facing. What this release is FOR, where it sits in the workflow, what it unblocks or supersedes, how pseudomonorepo / context-vigilance logic should treat it. Not a longer lede — the lede sells the click and feeds OpenGraph; this orients an agent deciding whether to open the file."
+publish: true
+authors:
+  - Firstname Lastname
+augmented_with:
+  - Pi on Claude Sonnet 4.5
+release_version: "X.Y.Z"
+files_changed:
+  - path/from/project-root/src/important-file.ts
+tags:
+  - Release
+  - PRODUCT-NAME
+---
+
+# PRODUCT vX.Y.Z — Release Title
+
+## Why Care?
+
+The headline change. Why does this release matter to the people using PRODUCT? One paragraph, audience-facing.
+
+## What's New?
+
+### Highlights
+
+- Top 3-5 user-facing changes
+- Each one phrased as a benefit, not a task
+
+### Added
+
+- New features or capabilities
+
+### Changed
+
+- Behavior changes that existing users will notice
+- Note any breaking changes prominently
+
+### Fixed
+
+- Bug fixes worth calling out
+
+### Deprecated
+
+- Anything being phased out, with the timeline if known
+
+### Removed
+
+- Anything taken away in this release
+
+## Upgrade Notes
+
+If users need to do anything to upgrade — say so. Migration scripts, config changes, before/after examples.
+
+```diff
+- old usage
++ new usage
+```
+
+## The Story Behind This Release
+
+> *(Optional.)* What shaped this release? What did we learn between the last release and this one? What was hard, what surprised us, what we'd do differently.
+
+## Thanks
+
+If contributors landed work in this release, name them.

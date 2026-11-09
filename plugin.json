@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "astro-knots",
+  "version": "0.1.0",
+  "description": "Build an Astro website with your agent, following The Lossless Group's Astro Knots patterns: skills for the stack, theming, markdown and share images, plus a check on every edit that catches React and JSX habits.",
+  "author": { "name": "The Lossless Group", "url": "https://github.com/lossless-group" },
+  "homepage": "https://lossless-group.github.io/astro-knots/",
+  "repository": "https://github.com/lossless-group/astro-knots-mcp",
+  "license": "Apache-2.0",
+  "keywords": ["astro", "svelte", "website", "agent-skills", "opengraph", "seo"],
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "onboardingSkill": "./skills/start-an-astro-knot/SKILL.md",
+      "interface": {
+        "displayName": "Astro Knots",
+        "shortDescription": "Build a website with your agent, the Astro Knots way",
+        "longDescription": "Skills for Astro with Svelte, Lossless Flavored Markdown, Vitest, three-mode theming, DESIGN.md, and share images and SEO done right, plus a hook that checks every edit for React and JSX habits.",
+        "developerName": "The Lossless Group",
+        "category": "Coding",
+        "websiteURL": "https://lossless-group.github.io/astro-knots/",
+        "defaultPrompt": [
+          "Use Astro Knots to set me up to build a website.",
+          "Use Astro Knots to check this site with knot-check."
+        ]
+      }
+    }
+  }
+}

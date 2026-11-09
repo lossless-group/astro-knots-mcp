@@ -1,0 +1,25 @@
+{
+  "name": "astro-knots-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Build an Astro Knots website with your coding agent: a link MCP, a Claude Code plugin and a Codex plugin, sharing one set of guardrails (knot-check).",
+  "type": "module",
+  "bin": {
+    "knot-check": "./knot-check/cli.mjs"
+  },
+  "scripts": {
+    "sync-skills": "node scripts/sync-skills.mjs",
+    "bundle-kit": "node scripts/bundle-kit.mjs",
+    "set-mcp-url": "node scripts/set-mcp-url.mjs",
+    "pretest": "node scripts/bundle-kit.mjs",
+    "test": "vitest run",
+    "check": "node scripts/bundle-kit.mjs && tsc --noEmit",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.158.0"
+  }
+}

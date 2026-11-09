@@ -1,0 +1,18 @@
+{
+  "description": "Astro Knots: check each edit for React/JSX patterns, banned frameworks and workspace: links.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|apply_patch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/knot-hook.mjs\"",
+            "timeout": 15,
+            "statusMessage": "Checking Astro Knots patterns"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+// The link MCP: one Worker, no bindings, no secrets, no storage.
+// Deploy: pnpm exec wrangler login, then pnpm deploy. Then run
+// pnpm set-mcp-url <the URL wrangler prints>/mcp so both plugins point at it.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "astro-knots-mcp",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  // Skills ship inside the Worker (worker/kit.generated.ts), built from skills/.
+  "build": { "command": "node scripts/bundle-kit.mjs" },
+  "observability": { "enabled": true }
+}

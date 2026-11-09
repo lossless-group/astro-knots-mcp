@@ -4,15 +4,15 @@ type: Explorations
 lede: "Our sites follow patterns honed across twenty builds. Could an MCP hand those patterns, and their guardrails, to anyone vibe coding a site?"
 publish: false
 date_created: 2026-10-29
-date_modified: 2026-10-29
+date_modified: 2026-11-09
 date_authored_initial_draft: 2026-10-29
-date_authored_current_draft: 2026-10-29
+date_authored_current_draft: 2026-11-09
 date_authored_final_draft:
 authors:
   - Michael P. Staton
 augmented_with:
   - Claude Code on Claude Opus 5.5 (1M context)
-at_semantic_version: 0.0.1.0
+at_semantic_version: 0.0.2.0
 tags:
   - Exploration
   - Astro-Knots
@@ -129,6 +129,31 @@ and can only prompt for the third.
     (itself a Vitest test the template ships with).
 - Everything in the table above marked "Yes", **especially no React and
   no JSX patterns**.
+- **Share and search, from the first commit** (added 2026-11-09). A site
+  people can't share well, or that search engines and models can't read, is
+  unfinished, however good it looks. The starter ships it working, and
+  `knot_check` fails a build without it:
+  - **Share cards that fit where they're shared.** iMessage and WhatsApp can
+    use taller proportions, and a tall card looks much better there; feeds
+    like LinkedIn crop it. Each app's preview crawler names itself, so an
+    edge layer in front of the site (a Cloudflare Worker) serves each one
+    the card it shows best. Every response carries exactly **one**
+    `og:image`: two tags give a preview mixing both on iPhone
+    ([[iPhone-Share-Previews-Conflate-the-Tall-and-Wide-Banners]]). Where
+    there's no edge layer, the default is tall, with the wide banner only in
+    `twitter:image` for X.
+  - **Images that unfurl:** JPEG, absolute `https://` URLs, declared size
+    and type matching the bytes, under about 500 KB.
+  - **One `MetaTags` component and an SEO registry,** so title,
+    description, canonical URL and images are set in one place per page.
+  - **Search and models:** `@astrojs/sitemap` with `robots.txt`, a canonical
+    URL on every page, JSON-LD for articles, and `llms.txt`.
+  - Banners come from the site's own `DESIGN.md`, through
+    `generate-consistent-og-images`, so share images match the site.
+  - *Checked, on the built site:* exactly one `og:image` with its six tags,
+    absolute URLs, the image file's real size and type matching its tags,
+    sitemap and `robots.txt` present. The skills behind it:
+    `open-graph-share-seo-geo` and `generate-consistent-og-images`.
 
 ### Highly recommended (non-strict)
 
@@ -149,6 +174,51 @@ and can only prompt for the third.
     entry is newer than the last meaningful commit, and commit headers
     follow the convention. Each warning says how to fix it, and none
     blocks a publish.
+- **Ideogram for agent image generation** (added 2026-11-09, after our best
+  experience with it yet). Share banners, heroes and section art are made
+  by the agent, from the site's `DESIGN.md`, through
+  `generate-consistent-og-images`, so new pages get matching images without
+  anyone opening a design tool.
+  - **Part of setup, not an afterthought.** Getting started asks the person
+    for an Ideogram API key and puts it in their environment as
+    `IDEOGRAM_API_KEY`, outside the repo, so every later session can keep
+    generating. The Ideogram MCP server is added to their agent with that
+    variable.
+  - **It costs money per image.** Setup says so, and points to a spending
+    cap on the Ideogram account, especially for younger collaborators on
+    someone else's key.
+  - *Checked as a warning:* `knot_check`'s doctor notes a missing
+    `IDEOGRAM_API_KEY` and says what it turns on.
+- **Large content collections live outside the site repo**, in one of two
+  places, fetched at build time (added 2026-11-09):
+  - **The GitHub Content API**, reading markdown from one or more repos.
+    Prior art: [[Context-V-GitHub-Fetcher-for-Multi-Repo-Content-Aggregation]]
+    in astro-knots. Needs a `GITHUB_TOKEN` at build time, since
+    unauthenticated requests are limited to 60 an hour.
+  - **Cloudflare Artifacts**: git repos on Cloudflare, which the site's own
+    Worker can read and write. event-hog keeps one per event this way. The
+    natural choice for a site already on Cloudflare, or when content is
+    written by agents or apps rather than people in a repo.
+  - Either way, the site keeps only a small set of content in its own repo,
+    so builds and clones stay fast as the collection grows.
+
+### Decided: spike freely, then refactor back into the design system
+
+Added 2026-11-09. Coding agents seem to be "faster" and "better" when
+building new features, pages and UI without thinking about the existing
+component library. Agents make a gametime decision to use it or not; when the
+emphasis is to be creative, we usually break free of it, then refactor back
+into it. Most developers forget that discipline, and it slows the team down
+later. The design system has two halves and the refactor covers both: the
+component library (Component-Driven Architecture, cataloged on
+`/design-system`) and the theme (tokens, shown on `/brand-kit`).
+
+- Skills: `spike-then-refactor-into-components`, `maintain-design-system-page`.
+- *Checked as warnings,* never blocking a spike: `knot-check components` lists
+  open `@spike` markers, uncatalogued components, oversized pages, and raw
+  colors and fonts outside the theme.
+- Refactors are assigned to their own agent (`component-refactorer` in the
+  Claude Code plugin), one per spike, behavior locked by tests first.
 
 ### Where the skills live: `context-v/agent-skills/`, linked in
 
@@ -606,8 +676,8 @@ The tool-to-package mapping for each manager belongs in `knot-check`'s
    configure anything themselves.
 2. ~~**How rigid?**~~ Partly answered: required (Vitest TDD, LFM, the
    mechanical stack rules), highly recommended (Context Vigilance and its
-   skills), taste. Still open: which of the remaining "Yes" rows are
-   required and which are recommended (search by default? OG images?).
+   skills), taste. OG images and SEO are required (2026-11-09). Still open:
+   search by default (Pagefind).
 3. **Which site is the template?** One canonical starter, or several
    (content site, splash, deck, portfolio)?
 4. **Where do their sites live and deploy?** Their GitHub and their

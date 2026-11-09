@@ -1,0 +1,13 @@
+{
+  "name": "astro-knots-mcp",
+  "description": "Astro Knots: build websites with your coding agent, following The Lossless Group's patterns.",
+  "owner": { "name": "The Lossless Group", "url": "https://github.com/lossless-group" },
+  "plugins": [
+    {
+      "name": "astro-knots",
+      "description": "Skills for the Astro Knots stack, theming, markdown and share images, plus a check on every edit.",
+      "version": "0.1.0",
+      "source": "./"
+    }
+  ]
+}
