@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Mood Board</title>
+
+<!-- ============================================================
+     BOARD DATA — edit this JSON and the board re-renders from it.
+     Top level: kicker, title, title_em (the word to highlight),
+     intro, fonts (one Google Fonts css2 URL), footer.
+     Each cluster: id, name, sub, read, steal[], heading (CSS font
+     shorthand for the cluster's own lettering), color, tilt (deg).
+     Each item: t = title, by = credit, k = kind, img = image URL,
+     src = page it came from.
+     ============================================================ -->
+<script type="application/json" id="board-data">
+{
+  "kicker": "Mood board · <what the brand is>",
+  "title": "<Three short words>,",
+  "title_em": "<one more>",
+  "intro": "<One or two sentences: the reference worlds and why they belong together. Every tile opens its source.>",
+  "fonts": "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600&display=swap",
+  "footer": "Reference only. Every image belongs to its credited maker and links to its source. Nothing here is cleared for use in the final brand.",
+  "clusters": [
+    {
+      "id": "example",
+      "name": "Cluster name",
+      "sub": "What this world is, in a phrase",
+      "read": "How it feels and what it does for the brand, in a sentence or two.",
+      "steal": ["A specific move", "Another specific move", "A palette note", "A type note"],
+      "heading": "600 clamp(40px, 7.5vw, 80px)/1.05 'Barlow Condensed', sans-serif",
+      "color": "#d9a441",
+      "tilt": 0,
+      "items": [
+        {"t": "Title of the piece", "by": "Maker, source", "k": "photo", "img": "https://images.unsplash.com/photo-...?w=900&q=70&auto=format&fit=crop", "src": "https://unsplash.com/photos/..."}
+      ]
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" id="board-fonts" href="">
+
+<style>
+/* Layout: one pin-wall per cluster, each headed in the lettering of its own world. */
+:root {
+  color-scheme: dark;
+  --asphalt: #17191c;
+  --panel: #202327;
+  --seam: #33373d;
+  --chrome: #e9ebee;
+  --dull: #9aa1aa;
+  --leaf: #d9a441;
+  --vermilion: #e0553a;
+  --f-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --f-label: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: var(--asphalt); }
+body {
+  margin: 0; background: var(--asphalt); color: var(--chrome);
+  font: 400 16px/1.5 var(--f-body);
+  padding-inline: clamp(16px, 4vw, 48px); padding-block: 40px 80px;
+}
+a { color: inherit; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+
+.label { font: 600 12px/1 var(--f-label); letter-spacing: .14em; text-transform: uppercase; color: var(--dull); }
+
+header.top { display: grid; gap: 14px; max-width: 70ch; }
+header.top h1 { margin: 0; font: 600 clamp(30px, 5vw, 52px)/1.05 var(--f-label); letter-spacing: .01em; text-wrap: balance; }
+header.top h1 em { font-style: normal; color: var(--leaf); }
+header.top p { margin: 0; color: var(--dull); }
+
+nav.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+nav.jump a { text-decoration: none; border: 1px solid var(--seam); padding: 7px 14px; border-radius: 999px; font: 600 13px/1 var(--f-label); letter-spacing: .1em; text-transform: uppercase; }
+nav.jump a:hover { border-color: var(--leaf); color: var(--leaf); }
+
+details.json { margin-top: 22px; border: 1px solid var(--seam); background: var(--panel); }
+details.json summary { cursor: pointer; padding: 12px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between; list-style: none; }
+details.json summary::-webkit-details-marker { display: none; }
+details.json summary span.hint { color: var(--dull); font-size: 13px; }
+details.json .bar { display: flex; justify-content: flex-end; padding: 0 16px 10px; }
+details.json button { font: 600 12px/1 var(--f-label); letter-spacing: .12em; text-transform: uppercase; background: var(--leaf); color: #17191c; border: 0; padding: 9px 14px; cursor: pointer; }
+details.json pre { margin: 0; padding: 16px; max-height: 360px; overflow: auto; border-top: 1px solid var(--seam); font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--dull); white-space: pre; }
+
+section.cluster { margin-top: 72px; scroll-margin-top: 20px; }
+.head { display: grid; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--seam); margin-bottom: 24px; }
+.head h2 { margin: 0; line-height: 1; text-wrap: balance; transform-origin: left bottom; }
+.head .read { margin: 0; max-width: 62ch; }
+.steal { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.steal li { font-size: 13px; padding: 5px 10px; border-left: 2px solid var(--vermilion); background: var(--panel); }
+
+.wall { columns: 4 240px; column-gap: 14px; }
+figure.pin { break-inside: avoid; margin: 0 0 14px; background: var(--panel); position: relative; }
+figure.pin a { display: block; text-decoration: none; }
+figure.pin img { display: block; width: 100%; height: auto; min-height: 120px; background: #2a2e33; }
+figure.pin figcaption { padding: 10px 12px 12px; display: grid; gap: 3px; }
+figure.pin .t { font-weight: 600; font-size: 14px; line-height: 1.3; }
+figure.pin .by { font-size: 12.5px; color: var(--dull); }
+figure.pin .k { position: absolute; top: 8px; left: 8px; background: rgba(23,25,28,.82); padding: 5px 8px; font: 600 10.5px/1 var(--f-label); letter-spacing: .14em; text-transform: uppercase; color: var(--leaf); }
+figure.pin.dead img { display: none; }
+figure.pin.dead a::before { content: "Image didn't load — open source"; display: grid; place-items: center; min-height: 120px; padding: 30px 14px 10px; color: var(--dull); font-size: 13px; text-align: center; }
+figure.pin a:hover .t { color: var(--leaf); }
+
+footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--seam); color: var(--dull); font-size: 13px; max-width: 75ch; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="label" id="kicker"></span>
+  <h1 id="title"></h1>
+  <p id="intro"></p>
+</header>
+
+<nav class="jump" id="jump" aria-label="Clusters"></nav>
+
+<details class="json">
+  <summary><span class="label">Image links as JSON</span><span class="hint">open to view or copy</span></summary>
+  <div class="bar"><button type="button" id="copy">Copy JSON</button></div>
+  <pre id="json-view" tabindex="0"></pre>
+</details>
+
+<main id="board"></main>
+
+<footer id="footer"></footer>
+
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('board-data').textContent);
+  document.getElementById('json-view').textContent = JSON.stringify(data, null, 2);
+  if (data.fonts) document.getElementById('board-fonts').href = data.fonts;
+  document.title = (data.title + ' ' + (data.title_em || '')).replace(/,\s*$/, '') + ' — Mood Board';
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+  document.getElementById('kicker').textContent = data.kicker || '';
+  var h1 = document.getElementById('title');
+  h1.textContent = (data.title || '') + ' ';
+  if (data.title_em) h1.appendChild(el('em', '', data.title_em));
+  document.getElementById('intro').textContent = data.intro || '';
+  document.getElementById('footer').textContent = data.footer || '';
+
+  var board = document.getElementById('board'), jump = document.getElementById('jump');
+
+  data.clusters.forEach(function (c) {
+    var j = el('a', '', c.name + ' · ' + c.items.length); j.href = '#' + c.id; jump.appendChild(j);
+
+    var s = el('section', 'cluster'); s.id = c.id;
+    var h = el('div', 'head');
+    h.appendChild(el('span', 'label', c.sub));
+    var h2 = el('h2', '', c.name);
+    if (c.heading) h2.style.font = c.heading;
+    if (c.color) h2.style.color = c.color;
+    if (c.tilt) h2.style.transform = 'rotate(' + c.tilt + 'deg)';
+    h.appendChild(h2);
+    h.appendChild(el('p', 'read', c.read));
+    var ul = el('ul', 'steal'); (c.steal || []).forEach(function (x) { ul.appendChild(el('li', '', x)); }); h.appendChild(ul);
+    s.appendChild(h);
+
+    var wall = el('div', 'wall');
+    c.items.forEach(function (it) {
+      var f = el('figure', 'pin'), a = el('a');
+      a.href = it.src; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      var img = new Image();
+      img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.alt = it.t + ' — ' + it.by;
+      img.onerror = function () {
+        // Dribbble: fall back to the smaller rendition before giving up.
+        if (!img.dataset.retried && /resize=800x0/.test(img.src)) { img.dataset.retried = '1'; img.src = img.src.replace('resize=800x0', 'resize=400x0'); }
+        else { f.classList.add('dead'); }
+      };
+      img.src = it.img;
+      a.appendChild(img);
+      var cap = el('figcaption'); cap.appendChild(el('span', 't', it.t)); cap.appendChild(el('span', 'by', it.by)); a.appendChild(cap);
+      f.appendChild(a); f.appendChild(el('span', 'k', it.k));
+      wall.appendChild(f);
+    });
+    s.appendChild(wall);
+    board.appendChild(s);
+  });
+
+  var btn = document.getElementById('copy');
+  btn.addEventListener('click', function () {
+    var text = JSON.stringify(data, null, 2);
+    var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy JSON'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, select);
+    } else { select(); }
+    function select() { var r = document.createRange(); r.selectNodeContents(document.getElementById('json-view')); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected — press copy'; }
+  });
+})();
+</script>
+</body>
+</html>

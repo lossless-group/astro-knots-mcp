@@ -1,6 +1,6 @@
 ---
 name: start-an-astro-knot
-description: Set someone up to build an Astro Knots website with their coding agent, from an empty folder to a deployed site that passes knot-check. Use when someone says "get started", "set me up", "start a new site", "make me a website", or connects Astro Knots for the first time. Covers the machine, the plugin, image generation, the site's stack, share images and SEO, and the first deploy.
+description: Set someone up to build an Astro Knots website with their coding agent, from an empty folder to a deployed site that passes knot-check. Use when someone says "get started", "set me up", "start a new site", "make me a website", or connects Astro Knots for the first time. Covers agreeing the site's narrative (grilled one question at a time) and mood board before any code, the machine, the plugin, image generation, the site's stack, share images and SEO, and the first deploy.
 ---
 
 # Start an Astro Knot
@@ -9,15 +9,27 @@ The person you're helping may not be a developer. Do the work yourself, explain
 in one plain sentence what each step is for, and ask only for what you can't
 decide or do for them. Keep moving.
 
-## 0. Find out what they're making
+## 0. Agree on the story, then the look
 
-Ask, in one message:
-1. What's the site for, and who is it for?
-2. Is there a name, and a domain they already own?
-3. A brand, a site they like the look of, or a feeling it should have?
+Before any code, settle what the site says and what it looks like. These two
+steps are where a beginner does their real deciding; don't rush them.
 
-If they're improving an existing Astro site, skip to step 4 and run
-`knot-check` first to see where it stands.
+1. **The narrative** (`write-site-narrative`). Grill them one question at a
+   time, each with your recommended answer, until you share an understanding
+   of who the site is for, what it promises and how it should feel. Write it to
+   `context-v/narratives/<Site>-Narrative.md` and get it signed off. Ask about
+   a name and a domain they already own along the way.
+2. **The mood board** (`build-a-moodboard`). From the narrative, propose 2 to 4
+   reference worlds, fill them with real, credited images, and let them react
+   pin by pin. Write down what they kept: that's the brief for `DESIGN.md` and
+   the brand kit.
+
+The machine and plugin setup (steps 1 to 3) can happen around these, while
+they think.
+
+If they're improving an existing Astro site, read its pages, write the
+narrative from what's there and confirm it with them, then go to step 4 and
+run `knot-check` first to see where it stands.
 
 ## 1. The machine
 
@@ -80,7 +92,8 @@ Then, loading the matching skill before each part:
 | Stack rules: Astro pages, Svelte only for interactivity, no React or JSX | `astro-knots` |
 | `vitest.config.ts` with `getViteConfig()` from `astro/config`, tests beside the code | `astro-knots` |
 | Markdown content rendered through LFM (`parseMarkdown` and `AstroMarkdown`), code colored by `@lossless-group/lfm/highlight`, components copied from `packages/lfm-astro/components/` | `lossless-flavored-markdown` (its "Rendering: the hard rules") |
-| `DESIGN.md` from what they told you in step 0 | `maintain-design-md` |
+| `DESIGN.md` and `/brand-kit` from the mood board's decisions | `maintain-design-md`, `maintain-design-system-page` |
+| Page copy as Markdown in content collections, written from the signed-off narrative; `TODO:` for missing facts, never invented ones | `write-site-narrative` (§5) |
 | Two-tier tokens and three modes (light, dark, vibrant), pre-paint mode script | `theme-system` |
 | One `MetaTags` component, an SEO registry, sitemap, `robots.txt`, `llms.txt` | `open-graph-share-seo-geo` |
 | Share banners: tall (1200x1600) **and** wide (1200x630), JPEG | `generate-consistent-og-images` |

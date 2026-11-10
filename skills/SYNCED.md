@@ -2,6 +2,8 @@
 
 These folders are copied from [lossless-agent-skills](https://github.com/lossless-group/lossless-agent-skills) by `pnpm sync-skills`. Don't edit them here: edit the original and sync again.
 
+- `write-site-narrative`
+- `build-a-moodboard`
 - `astro-knots`
 - `theme-system`
 - `lossless-flavored-markdown`

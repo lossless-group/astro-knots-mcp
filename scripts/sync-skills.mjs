@@ -16,6 +16,8 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const source = resolve(process.env.SKILLS_SOURCE ?? join(root, "../../../context-v/agent-skills"));
 
 export const SYNCED = [
+  "write-site-narrative",
+  "build-a-moodboard",
   "astro-knots",
   "theme-system",
   "lossless-flavored-markdown",
