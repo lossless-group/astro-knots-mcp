@@ -25,6 +25,7 @@ export const SYNCED = [
   "generate-consistent-og-images",
   "maintain-design-md",
   "maintain-design-system-page",
+  "trademark-packs-files",
   "spike-then-refactor-into-components",
   "changelog-conventions",
   "git-conventions",

@@ -15,6 +15,11 @@
      shorthand for the cluster's own lettering), color, tilt (deg).
      Each item: t = title, by = credit, k = kind, img = image URL,
      src = page it came from.
+     Optional "sites": live websites shown as link cards (the
+     lossless-toolkit ToolCard shape): title, url, domain, summary,
+     image (1200x630 OG image, or a hero screenshot),
+     image_is_screenshot, tags[], steal (what to take from it).
+     Delete the array when the board has no websites.
      ============================================================ -->
 <script type="application/json" id="board-data">
 {
@@ -38,8 +43,12 @@
         {"t": "Title of the piece", "by": "Maker, source", "k": "photo", "img": "https://images.unsplash.com/photo-...?w=900&q=70&auto=format&fit=crop", "src": "https://unsplash.com/photos/..."}
       ]
     }
+  ],
+  "sites": [
+    {"title": "Site name", "url": "https://example.com/", "domain": "example.com", "summary": "What the site is, in a sentence.", "image": "refs/sites/example-com.jpg", "image_is_screenshot": true, "tags": ["Book-Serif-Headlines", "One-Accent-Color"], "steal": "The one or two moves worth borrowing from this site."}
   ]
 }
+
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,6 +116,22 @@ figure.pin.dead img { display: none; }
 figure.pin.dead a::before { content: "Image didn't load — open source"; display: grid; place-items: center; min-height: 120px; padding: 30px 14px 10px; color: var(--dull); font-size: 13px; text-align: center; }
 figure.pin a:hover .t { color: var(--leaf); }
 
+/* Websites: link cards in the lossless-toolkit ToolCard shape (OG image, title, host, summary, tags). */
+.sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+article.site { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--seam); }
+article.site:hover { border-color: var(--leaf); }
+.site__link { display: flex; flex-direction: column; flex: 1; color: inherit; text-decoration: none; }
+.site__media { position: relative; aspect-ratio: 1200 / 630; overflow: hidden; background: #2a2e33; border-bottom: 1px solid var(--seam); }
+.site__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.site__media .k { position: absolute; top: 8px; left: 8px; background: rgba(23,25,28,.82); padding: 5px 8px; font: 600 10.5px/1 var(--f-label); letter-spacing: .14em; text-transform: uppercase; color: var(--leaf); }
+.site__body { display: grid; gap: 6px; padding: 14px 16px 12px; }
+.site__title { margin: 0; font: 600 20px/1.15 var(--f-label); letter-spacing: .02em; }
+.site__link:hover .site__title { color: var(--leaf); }
+.site__host { font: 600 12px/1 var(--f-label); letter-spacing: .12em; text-transform: uppercase; color: var(--dull); }
+.site__sum { margin: 0; font-size: 14px; color: var(--chrome); }
+.site__steal { margin: 4px 0 0; font-size: 13px; padding: 6px 10px; border-left: 2px solid var(--vermilion); background: var(--asphalt); color: var(--dull); }
+.site__tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 16px; margin: 0; list-style: none; }
+.site__tags li { font: 600 11px/1 var(--f-label); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border: 1px solid var(--seam); border-radius: 999px; color: var(--dull); }
 footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--seam); color: var(--dull); font-size: 13px; max-width: 75ch; }
 </style>
 </head>
@@ -184,6 +209,34 @@ footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--seam);
     board.appendChild(s);
   });
 
+  if (data.sites && data.sites.length) {
+    var j2 = el('a', '', 'Websites · ' + data.sites.length); j2.href = '#websites'; jump.appendChild(j2);
+    var ss = el('section', 'cluster'); ss.id = 'websites';
+    var sh = el('div', 'head');
+    sh.appendChild(el('span', 'label', 'Live sites worth borrowing from'));
+    var sh2 = el('h2', '', 'Websites'); sh2.style.font = "600 clamp(36px, 6vw, 68px)/1.02 var(--f-label)"; sh.appendChild(sh2);
+    sh.appendChild(el('p', 'read', 'Working websites, not print. Each card is the site\'s share image (or a screenshot of its hero when it has none) and says what to take from it.'));
+    ss.appendChild(sh);
+    var grid = el('div', 'sites');
+    data.sites.forEach(function (w) {
+      var card = el('article', 'site'), a = el('a', 'site__link');
+      a.href = w.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      var media = el('div', 'site__media'), img = new Image();
+      img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.alt = w.title + ' homepage'; img.width = 1200; img.height = 630; img.src = w.image;
+      media.appendChild(img); media.appendChild(el('span', 'k', w.image_is_screenshot ? 'screenshot' : 'og image'));
+      a.appendChild(media);
+      var b = el('div', 'site__body');
+      b.appendChild(el('h3', 'site__title', w.title));
+      if (w.domain) b.appendChild(el('span', 'site__host', w.domain));
+      if (w.summary) b.appendChild(el('p', 'site__sum', w.summary));
+      if (w.steal) b.appendChild(el('p', 'site__steal', w.steal));
+      a.appendChild(b); card.appendChild(a);
+      if (w.tags && w.tags.length) { var tl = el('ul', 'site__tags'); w.tags.forEach(function (t) { tl.appendChild(el('li', '', t)); }); card.appendChild(tl); }
+      grid.appendChild(card);
+    });
+    ss.appendChild(grid);
+    board.appendChild(ss);
+  }
   var btn = document.getElementById('copy');
   btn.addEventListener('click', function () {
     var text = JSON.stringify(data, null, 2);

@@ -1,11 +1,11 @@
 ---
 name: generate-consistent-og-images
-description: "How to generate share-imagery (OpenGraph banners, portraits, squares, tall WhatsApp/iMessage cards) for any Lossless site or splash page so the resulting images form a coherent visual family — via two coexisting techniques: Ideogram illustration, or rasterizing the project's own hero/specimen component with macOS's `qlmanage`+`sips` (or a Playwright screenshot for higher fidelity). Use whenever a site, splash, plugin page, or fundraise deck needs an OG image generated or refreshed; whenever the user says \"make an og image\", \"generate a banner\", \"we need a share image\", \"regenerate banners across formats\", \"the unfurl looks stale\", \"screenshot the hero for the share image\", \"turn this component into an OG image\"; whenever scaffolding a new Astro Knots site that doesn't yet have an `og:image` or a `DESIGN.md`; whenever per-page or per-component custom illustrative imagery is needed even if it deliberately departs from the OG-image canon; whenever an existing OG image (of either technique) might already be live and a decision is needed about replacing vs. keeping it. Encodes the pattern of (1) choose Ideogram illustration vs. hero rasterization per the Strategy Choice section, (2) check / create a DESIGN.md following the Google Stitch open spec, (3) check / add an `imagery:` recipe block to that DESIGN.md, (4) call Ideogram v3 generate with every field locked except `prompt` and `aspect_ratio` (or rasterize the hero via `qlmanage`+`sips`), (5) save with the canonical naming convention, (6) treat WhatsApp + iMessage chat-preview as the primary share surface and other socials as secondary, (7) run the Case Protocol before wiring anything into a live `og:image` tag. The skill never sees an API key in source — `IDEOGRAM_API_KEY` lives in `~/.secrets` and is inherited from the shell, same pattern as the `crawl-fetch-ingest` skill."
+description: "How to generate share-imagery (OpenGraph banners, portraits, squares, tall WhatsApp/iMessage cards) for any Lossless site or splash page so the resulting images form a coherent visual family — via three coexisting techniques: per-page cards rendered at build time in the site itself (the default for any site with more than a few pages: a tall og:image and wide twitter:image for every page and section), Ideogram illustration, or rasterizing the project's own hero/specimen component with macOS's `qlmanage`+`sips` (or a Playwright screenshot for higher fidelity). Use whenever a site, splash, plugin page, or fundraise deck needs an OG image generated or refreshed; whenever the user says \"make an og image\", \"generate a banner\", \"we need a share image\", \"regenerate banners across formats\", \"the unfurl looks stale\", \"screenshot the hero for the share image\", \"turn this component into an OG image\"; whenever scaffolding a new Astro Knots site that doesn't yet have an `og:image` or a `DESIGN.md`; whenever per-page or per-component custom illustrative imagery is needed even if it deliberately departs from the OG-image canon; whenever an existing OG image (of either technique) might already be live and a decision is needed about replacing vs. keeping it. Encodes the pattern of (1) choose Ideogram illustration vs. hero rasterization per the Strategy Choice section, (2) check / create a DESIGN.md following the Google Stitch open spec, (3) check / add an `imagery:` recipe block to that DESIGN.md, (4) call Ideogram v3 generate with every field locked except `prompt` and `aspect_ratio` (or rasterize the hero via `qlmanage`+`sips`), (5) save with the canonical naming convention, (6) treat WhatsApp + iMessage chat-preview as the primary share surface and other socials as secondary, (7) run the Case Protocol before wiring anything into a live `og:image` tag. The skill never sees an API key in source — `IDEOGRAM_API_KEY` lives in `~/.secrets` and is inherited from the shell, same pattern as the `crawl-fetch-ingest` skill."
 ---
 
 # Generate Consistent OG Images
 
-> Two techniques, either one valid: generate a wordless illustration with Ideogram (two variables per request — aspect ratio and a one-sentence prompt; everything else locked at the `DESIGN.md` level), or rasterize the project's own hero/specimen component with `qlmanage`+`sips`. Illustration quality is stochastic — some runs land, some don't — while a hero rasterization is deterministic and on-message whenever the hero already says the thing. Pick per project, or per format, and let both coexist.
+> **Sites with more than a few pages: render a card per page at build time** (Technique C below), tall `og:image` plus wide `twitter:image`. For a single site-wide or splash image, two more techniques, either one valid: generate a wordless illustration with Ideogram (two variables per request — aspect ratio and a one-sentence prompt; everything else locked at the `DESIGN.md` level), or rasterize the project's own hero/specimen component with `qlmanage`+`sips`. Illustration quality is stochastic — some runs land, some don't — while a hero rasterization is deterministic and on-message whenever the hero already says the thing. Pick per project, or per format, and let both coexist.
 
 ## When to use this skill
 
@@ -24,7 +24,7 @@ In practice this means:
 
 - **Tall aspect ratios get production attention**, not just landscape banners. `3x4` (WhatsApp / iMessage default) and `2x3` (extra-tall) variants are first-class assets, not afterthoughts.
 - **Subject lives in the lower portion of the frame** by default so the top half stays clean for the receiver's preview crop (chat platforms aggressively top-crop tall images).
-- **The 1200×630 OG-canonical banner is one format among several**, not the only target. Other social-specific banners (LinkedIn portrait, Twitter Card) are still produced when needed, but never at the expense of a polished tall variant.
+- **The tall card is the one `og:image`; the 1200×630 banner goes in `twitter:image`** and is edge-routed to LinkedIn, Bluesky and Discord. Never two `og:image` tags. Which variant each platform gets: rule 6 of the `open-graph-share-seo-geo` skill.
 
 This shapes the aspect-ratio enum below and the naming convention.
 
@@ -55,7 +55,46 @@ How:
 3. **Higher-fidelity alternative:** screenshot the live component in a headless browser (Playwright's `page.screenshot()` at a fixed viewport) instead of hand-authoring separate markup. This guarantees pixel-parity with the real rendered site — actual fonts, gradients, CSS masks/filters, JS-driven layout — at the cost of a Playwright dependency. Prefer this over the `qlmanage` route when the hero relies on CSS/JS features QuickLook's renderer may not reproduce faithfully (it's WebKit-based but not a full browser tab — untested against remote web-font loads, CSS filters/masks, and JS-driven layout).
 4. **Same naming convention, same preservation discipline** as the Ideogram path — archive the outgoing file before overwriting, don't skip the format-per-surface thinking just because there's no Ideogram call involved.
 
+### Technique C — Per-page cards rendered at build time (default for content sites)
+
+Every page, event, article and section gets its own card, drawn from its own
+content with satori and rasterized with sharp during `astro build`, by a static
+endpoint (`src/pages/og/[variant]/[...key].jpg.ts`). Each page emits **one tall
+1080×1440 `og:image`** and the wide 1200×630 card in `twitter:image` only. No
+runtime, no host-specific API, and the cards exist the moment the content does.
+
+- Full pattern, design rules and lessons:
+  `astro-knots/context-v/blueprints/Share-Every-Page-and-Section-With-Its-Own-OG-Image.md`.
+- Reference implementations: `astro-knots/sites/cathode-site` (dark brand, LFM)
+  and `astro-knots/sites/edviro-blog` (light brand, Astro MDX), both shipped
+  2026-11-17 and confirmed as clean tall cards in iMessage.
+- **Two kinds of share decide which technique a page gets.**
+  - *Content shares* (an article, memo or update, or a heading in one) are
+    about that content: Technique C cards, text first.
+  - *Site shares* (home, about, collection indexes, other generic pages, a
+    splash) have room for the illustration. Generate the full Technique A set
+    from one prompt (`banner_tall`, `banner`, `portrait`, `square`; it's
+    cheap), and the edge routing serves each platform its shape: `banner_tall`
+    as `og:image` for iMessage and WhatsApp, `banner` as `twitter:image` and
+    for LinkedIn, Bluesky and Discord, `square` for on-site thumbnails.
+    Frontmatter keys: `banner_tall_image`, `banner_image`, `portrait_image`,
+    `square_image`, plus `image_prompt`. With no set, the page gets the
+    universal card.
+- **A + C together: the illustration is the card's art, not the card.** Here
+  Ideogram does not make `BannerTall` or `Banner`; satori renders both cards and
+  the illustration is one layer inside them. Generate one wordless `share_art`
+  per page at **`4x3`**: the tall card shows it as its top band (1080×806, about
+  4:3) and the wide card crops it into its right 58% (696×630, nearly square).
+  Subject left of center, right fifth expendable, anchored `left center`. Every
+  word on the card comes from the page's metadata. Store the URL as `share_art`
+  with the prompt in `image_prompt`, and let the page's section cards reuse it.
+- **Private pages get a "Private" pill on the card**, driven by the same flag
+  that gates the route. The pill is a label; the card itself is public.
+
 ### Choosing per project
+
+- **More than a handful of pages, or any long-form content?** Technique C, and
+  use A or B only for the site card.
 
 - Ask: *does the hero/specimen already say what we want the OG image to say?* If yes, Technique B is often the safer default — deterministic, on-message, no illustration-quality lottery.
 - Technique A is the better fit for subjects with no single UI element that captures the pitch — metaphor, narrative, abstract concepts.
@@ -179,15 +218,15 @@ ogimage__{Site-Name}--{Format-Or-Variant}.{ext}
 ```
 
 - `Site-Name` — the project's canonical name in PascalCase or Hyphen-Joined-PascalCase: `Content-Farm`, `Reach-Edu-Hub`, `Calmstorm-Decks`, `Perplexed`.
-- `Format-Or-Variant` — one of: `Default`, `Banner`, `BannerTall`, `BannerTallMax`, `Portrait`, `PortraitTall`, `Square`. `Default` aliases whichever format is the canonical share image (typically `Banner`).
+- `Format-Or-Variant` — one of: `Default`, `Banner`, `BannerTall`, `BannerTallMax`, `Portrait`, `PortraitTall`, `Square`. `Default` aliases whichever format is the canonical share image (`BannerTall`, the `og:image`).
 - Extension: prefer `.jpg` per the `open-graph-share-seo-geo` skill's JPEG-over-WebP rule. Convert from Ideogram's PNG output with `ffmpeg -i in.png -q:v 2 out.jpg` (quality 2 is near-lossless and lands ~95 KB at 1200×630).
 
 Example set for `content-farm`:
 
 ```
-public/ogimage__Content-Farm--Default.jpg          # the canonical banner (also serves as style_reference)
-public/ogimage__Content-Farm--Banner.jpg           # alias of Default
-public/ogimage__Content-Farm--BannerTall.jpg       # WhatsApp / iMessage default tall
+public/ogimage__Content-Farm--Default.jpg          # the canonical share image, alias of BannerTall
+public/ogimage__Content-Farm--Banner.jpg           # twitter:image; edge-routed to LinkedIn, Bluesky, Discord
+public/ogimage__Content-Farm--BannerTall.jpg       # og:image, for WhatsApp / iMessage
 public/ogimage__Content-Farm--BannerTallMax.jpg    # dramatic-tall variant
 public/ogimage__Content-Farm--Portrait.jpg         # LinkedIn portrait / IG feed
 public/ogimage__Content-Farm--PortraitTall.jpg     # Stories / Reels / TikTok
@@ -200,12 +239,13 @@ If the image is destined for a CDN (per the `open-graph-share-seo-geo` skill's "
 
 | Format key | Ideogram `aspect_ratio` | When to use |
 |---|---|---|
-| `banner` | `16x9` | Default share — OpenGraph, Twitter / X, Slack, generic |
-| `banner_tall` | `3x4` | **WhatsApp & iMessage chat-preview cards (the Lossless default tall)** |
+| `banner_tall` | `3x4` | **The `og:image`: WhatsApp & iMessage chat-preview cards (the Lossless default)** |
+| `banner` | `16x9` | `twitter:image` (X); edge-routed to LinkedIn, Bluesky and Discord |
 | `banner_tall_max` | `2x3` | Dramatic-tall variant; use when the subject genuinely benefits from height |
-| `portrait` | `4x5` | LinkedIn portrait, Instagram feed post |
+| `portrait` | `4x5` | Native LinkedIn image posts and Instagram feed, uploaded by hand; no meta tag |
 | `portrait_tall` | `9x16` | Instagram Stories, Reels, TikTok |
-| `square` | `1x1` | Avatars, square OG fallbacks, Discord embeds |
+| `square` | `1x1` | Avatars; `twitter:image` only when `twitter:card` is `summary` |
+| `share_art` | `4x3` | Art layer inside per-page cards (Technique C); never an `og:image` by itself |
 
 The keys live in `imagery.aspect_ratios` of the project's `DESIGN.md`; the values may differ if a project has a different target mix, but the **format names** stay the same across projects so cross-site automation can talk in one vocabulary.
 

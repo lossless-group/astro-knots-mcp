@@ -87,6 +87,21 @@ Public sites ship two extras that gated sites can skip:
 - **Char limits + truncate:** `CHAR_LIMITS = { title: 60, description: 155, siteName: 30 }` plus a `truncate(s, limit)` helper. Apply at render time so authors write naturally and the meta still survives unfurler clipping.
 - **Article meta:** `publishedTime`, `modifiedTime`, `author`, `tags?[]` props on `<MetaTags>`, emitted only when `ogType === 'article'`. Required for any blog/changelog/post page that should unfurl as an article.
 
+## Share images for every page and every section
+
+The two-file architecture above decides *what* the tags say. Every site also
+needs the images: a card for every page, and for long-form content a card and a
+share URL for every h2/h3, because chat apps ignore `#fragments`.
+
+Static sites build them: `src/lib/share-cards.ts` (registry) → `src/lib/og-render.ts`
+(satori → resvg → sharp JPEG) → `src/pages/og/[variant]/[...key].jpg.ts`. Pages pass
+`shareKey` to the layout; `MetaTags` emits the tall card as the one `og:image` and
+the wide card as `twitter:image`. Sections get `/s/…` share pages and the heading
+anchor shares them.
+
+Reference implementation: `sites/cathode-site`. Blueprint:
+`astro-knots/context-v/blueprints/Share-Every-Page-and-Section-With-Its-Own-OG-Image.md`.
+
 ## Checklist for a new site
 
 1. Set `site: 'https://...'` in `astro.config.mjs`. **First.**

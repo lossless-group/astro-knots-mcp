@@ -61,6 +61,8 @@ Per-client behavior for the channels The Lossless Group cares about, ordered by 
 - **Required tags:** `og:title`, `og:image`, `og:description`, `og:url`.
 - **Quirks:**
   - Aspect ratio strict: 1.91:1 (1200 × 627–630). Outside that, falls back to small-card layout.
+  - Reads only `og:*`. There is no `linkedin:image`, so in static HTML it gets the tall `og:image`. To send it the 1200 × 630 banner, swap the image block at the edge for the `LinkedInBot` user agent (see SKILL.md rule 6).
+  - A native image post (not a link preview) can be up to 4:5 (1080 × 1350), but a post holds an image or a URL preview, not both.
   - Will not re-fetch a URL it has already cached unless forced.
 - **Force re-unfurl:** [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/) — paste URL → "Inspect" forces re-scrape.
 - **Debug:** Post Inspector shows what LinkedIn sees.

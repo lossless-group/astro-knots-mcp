@@ -1,6 +1,6 @@
 # LFM Package & Setup
 
-Installing `@lossless-group/lfm`, choosing between GitHub Packages and JSR, configuring `remarkLfm`, and the trigger-map override pattern. Read this when adding LFM to a new site or upgrading it.
+Installing `@lossless-group/lfm` (npm, JSR, or the GitHub Packages mirror), rendering it in a browser page with no build step, configuring `remarkLfm`, and the trigger-map override pattern. Read this when adding LFM to a new site, upgrading it, or showing LFM output in a Claude artifact or other no-build page.
 
 ## The two packages
 
@@ -11,11 +11,27 @@ Installing `@lossless-group/lfm`, choosing between GitHub Packages and JSR, conf
 
 For non-Astro consumers (rare; e.g. a Svelte/Solid site), use `@lossless-group/lfm` directly with your `unified` pipeline and ship your own components.
 
-## JSR is the canonical registry
+## Registries: npm, JSR, and a GitHub Packages mirror
 
-LFM is published to **[JSR](https://jsr.io)** as `@lossless-group/lfm` and `@lossless-group/lfm-astro`. JSR is the public, no-auth-required path that downstream sites and apps consume. **Default to JSR for any new install.** GitHub Packages is a secondary mirror retained for internal-only Lossless consumers that already have tokens configured — not the recommended path.
+From **0.11.0** (2026-11-21), `@lossless-group/lfm` is on three registries, all published from the same tag:
 
-### Install from JSR (recommended)
+| Registry | Name | Auth to install | Feeds the public CDNs? | Use it for |
+| --- | --- | --- | --- | --- |
+| **npm** ([npmjs.com](https://www.npmjs.com/package/@lossless-group/lfm)) | `@lossless-group/lfm` | none | **yes**: jsDelivr, unpkg, esm.sh | plain `pnpm add`, and any page that imports LFM by URL |
+| **JSR** ([jsr.io](https://jsr.io/@lossless-group/lfm)) | `@lossless-group/lfm` | none | no | Deno, and sites already on the `npm:@jsr/…` shim |
+| GitHub Packages | `@lossless-group/lfm` | GitHub token | no | internal mirror only |
+
+Versions before 0.11.0 are on JSR and GitHub Packages only. `@lossless-group/lfm-astro` is not published anywhere yet (copy its components; see `SKILL.md`).
+
+### Install from npm (simplest)
+
+```bash
+pnpm add @lossless-group/lfm
+```
+
+No `.npmrc`, no tokens. **Watch for one trap:** if the repo's or your user `.npmrc` maps the scope to GitHub Packages (`@lossless-group:registry=https://npm.pkg.github.com`), that line wins and the install goes to the mirror, which needs a token. Remove the line, or override it for one install with `--@lossless-group:registry=https://registry.npmjs.org`.
+
+### Install from JSR
 
 ```bash
 pnpm dlx jsr add @lossless-group/lfm
@@ -39,7 +55,7 @@ JSR install needs no auth tokens, no `.npmrc`, no GitHub credentials. Open-sourc
 
 ### GitHub Packages (mirror — internal use only)
 
-Only reach for this when working inside the Lossless private toolchain that already requires a GitHub token, *and* JSR is unsuitable for some reason. For everything else, JSR.
+Only reach for this when working inside the Lossless private toolchain that already requires a GitHub token, *and* npm and JSR are unsuitable for some reason. For everything else, npm or JSR.
 
 ```bash
 # .npmrc at repo root
@@ -52,6 +68,71 @@ pnpm add @lossless-group/lfm @lossless-group/lfm-astro
 ```
 
 Token needs `read:packages` scope.
+
+## In the browser, with no build step
+
+`@lossless-group/lfm/browser` (0.11.0+) is LFM with nothing that needs Node: the parser, the `remarkLfm` preset and every plugin, hex-code citations included. Use it for a Claude artifact, a CodePen, a plain HTML file, or client-side code in a bundled app (a live preview, an editor).
+
+What it leaves out:
+
+- **Open Graph fetching** (`lfmOgFetcher`, `OGDispatcher`, `OGCache`) keeps a cache file on disk, so it isn't there. The `ogFetch` option is ignored with a warning. Fetch link previews at build time with the root entry.
+- **Syntax highlighting** stays on `@lossless-group/lfm/highlight`, so parsing doesn't download Shiki.
+- **Code-fence formats** on `/formats` are browser-safe, except `/formats/plantuml` (it imports `node:zlib`).
+
+### Load it from a CDN
+
+Always pin an exact version. Claude artifacts can load scripts only from cdnjs, jsDelivr and unpkg, so use jsDelivr there.
+
+| CDN | URL |
+| --- | --- |
+| jsDelivr (preferred) | `https://cdn.jsdelivr.net/npm/@lossless-group/lfm@0.11.0/browser/+esm` |
+| esm.sh | `https://esm.sh/@lossless-group/lfm@0.11.0/browser` |
+| unpkg | `https://unpkg.com/@lossless-group/lfm@0.11.0/dist/browser.js` (raw file; its dependencies need an import map) |
+
+jsDelivr's `+esm` reads the package's `exports` map and bundles LFM's dependencies for the browser, so one import is enough.
+
+### Render to HTML: two steps, never one chain
+
+LFM produces an MDAST. To get HTML, parse with LFM first, then convert:
+
+```html
+<div id="out"></div>
+<script type="module">
+  import { unified } from 'https://cdn.jsdelivr.net/npm/unified@11.0.5/+esm';
+  import remarkRehype from 'https://cdn.jsdelivr.net/npm/remark-rehype@11.1.2/+esm';
+  import rehypeStringify from 'https://cdn.jsdelivr.net/npm/rehype-stringify@10.0.1/+esm';
+  import { parseMarkdown } from 'https://cdn.jsdelivr.net/npm/@lossless-group/lfm@0.11.0/browser/+esm';
+
+  const tree = await parseMarkdown(markdown);               // every LFM transform runs here
+  const hast = await unified().use(remarkRehype).run(tree); // MDAST to HTML tree
+  let html = unified().use(rehypeStringify).stringify(hast);
+
+  // LFM takes footnote definitions out of the tree and hands them over in
+  // citation order, so the page renders its own sources list. The ids match
+  // the links remark-rehype puts on each [^hex].
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+  html += '<ol class="sources">' + tree.data.citations.ordered.map((c) =>
+    `<li id="user-content-fn-${esc(c.identifier)}">` +
+    (c.url ? `<a href="${esc(c.url)}">${esc(c.title ?? c.url)}</a>` : esc(c.raw)) +
+    '</li>').join('') + '</ol>';
+
+  document.querySelector('#out').innerHTML = html;
+</script>
+```
+
+- **Citations are numbered by first appearance.** `[^a3f9b2]` cited first renders as 1, whatever order the definitions are in. Never write or invent citation numbers in the markdown; the hex keys are the source of truth. Each entry in `tree.data.citations.ordered` has `index`, `identifier`, `title`, `url`, `source` and any `publishedDate`.
+- **Don't chain** `unified().use(remarkParse).use(remarkLfm).use(remarkRehype)`. The preset's plugins attach after `remark-rehype` and run on the HTML tree, so callouts and citations are silently skipped. Logged in the LFM repo as `context-v/issues/Preset-Transforms-Run-After-Later-Plugins.md`.
+- LFM ships no CSS. Style the output (callouts, the sources list) in the page.
+
+The full guide, with a runnable example, is `docs-v/browser.md` in the LFM repo.
+
+### With a bundler
+
+```ts
+import { parseMarkdown, remarkLfm } from '@lossless-group/lfm/browser';
+```
+
+Use this subpath for client-side code so the bundle doesn't pull in the Node-only modules the root entry re-exports.
 
 ## Astro integration
 
@@ -244,28 +325,44 @@ Avoid `pnpm link --global` for cross-repo testing — it introduces version-reso
 
 ## Publishing (maintainers only)
 
-LFM publishes to JSR first, GitHub Packages second (mirror).
+> **Current as of 0.11.0 (2026-11-21).** LFM now lives in its own repo: `lossless-monorepo/lfm/`, GitHub `lossless-group/lossless-flavored-markdown-package`. The `astro-knots/packages/lfm` paths in the co-development section above predate the move.
 
-1. Bump `version` in `packages/lfm/jsr.json`, `packages/lfm/package.json`, and the matching `lfm-astro` files. Keep them in lockstep.
-2. Add a `changelog/` entry in `astro-knots/changelog/` (or the LFM repo's own `changelog/` once it spins out) following the [changelog-conventions skill](../../changelog-conventions/) — `publish: true`, `lede`, ISO dates, etc.
-3. Run the full validation suite:
-   ```bash
-   pnpm --filter @lossless-group/lfm test
-   pnpm --filter @lossless-group/lfm build
-   pnpm dlx jsr publish --dry-run
-   ```
-4. Tag and push:
-   ```bash
-   git tag lfm-vX.Y.Z
-   git push --tags
-   ```
-5. CI publishes to JSR on tag push. The GitHub Packages mirror runs after JSR succeeds.
+One tag publishes to npm and JSR, each from its own workflow. GitHub Packages is published by hand.
 
-For hotfixes when CI is broken, manual publish:
+1. Bump `version` in **both** `package.json` and `deno.json`. Keep them in lockstep, and never reuse a version already on any registry: npm and JSR can't overwrite a version, and two registries holding different code under one number is worse than a skipped number.
+2. Write release notes in `changelog/releases/<version>.md` (see the prior release for the frontmatter: `release_tag`, `prior_release_version`, …), following the [changelog-conventions skill](../../changelog-conventions/).
+3. Validate:
+   ```bash
+   pnpm install && pnpm test                       # test builds first
+   pnpm lfm:npm --dry-run                          # what npm would get
+   ```
+4. Tag the release commit and push the tag (`v`, not `lfm-v`):
+   ```bash
+   git tag -a vX.Y.Z -m "X.Y.Z: <headline>"
+   git push origin vX.Y.Z
+   ```
+5. On a `v*` tag, CI runs `publish-jsr.yml` (JSR, provenance via OIDC) and `publish-npm.yml` (npm via `scripts/publish-npm.sh --provenance`). Both skip a version that's already published, so re-running is safe. Both also have `workflow_dispatch`, to re-run from a branch when a tag's run failed for a reason unrelated to the package.
+6. Optional mirror: `pnpm lfm:gh` (uses `gh auth token`).
+
+Local scripts, each skipping an already-published version:
 
 ```bash
-pnpm dlx jsr publish        # JSR — no auth, signed via OIDC in CI; locally needs jsr login
-pnpm publish                # GitHub Packages mirror
+pnpm lfm:npm        # npm; needs `npm login --registry=https://registry.npmjs.org`
+pnpm lfm:jsr        # JSR; needs jsr login locally
+pnpm lfm:gh         # GitHub Packages mirror
+pnpm lfm:publish    # all three
+```
+
+**npm setup, done once.** The `@lossless-group` npm org is free (public packages only); the operator's npm account is its owner. Version 0.11.0 was published by hand to create the package. CI then publishes through **npm trusted publishing**: on npmjs.com, package → Settings → Trusted Publisher → GitHub Actions, organization `lossless-group`, repository `lossless-flavored-markdown-package`, workflow `publish-npm.yml`. Until that is set, CI falls back to the `NPM_TOKEN` secret.
+
+**CI pins pnpm 9; maintainers run pnpm 12.** Anything in `pnpm-workspace.yaml` must work on both. pnpm 9 requires a `packages` field there, and pnpm 12 blocks dependency build scripts unless they're allowed. So the file holds both:
+
+```yaml
+packages:
+  - '.'
+
+allowBuilds:
+  esbuild: true      # tsup needs esbuild's install script
 ```
 
 ## Troubleshooting
@@ -278,3 +375,10 @@ pnpm publish                # GitHub Packages mirror
 | Variant attribute typo passes silently       | `strictVariantAttributes: 'silent'`                   | Set to `'error'` in CI config                             |
 | Wikilinks 404                                | Target collection not in `wikilinks.collections`      | Add the collection name to the array                      |
 | Mermaid blocks render as code                | `mermaid.enabled: false` or Mermaid.js not loaded     | Enable in config; check the integration is included       |
+| Callouts and citations missing in browser HTML | `remarkLfm` and `remarkRehype` chained in one processor | Parse with `parseMarkdown` first, then convert (see "In the browser") |
+| `ogFetch is ignored` warning                 | Using `/browser`, which has no Open Graph fetching     | Fetch link previews at build time with the root entry     |
+| `pnpm add @lossless-group/lfm` asks for a token | `.npmrc` maps `@lossless-group` to GitHub Packages   | Remove that line, or pass `--@lossless-group:registry=https://registry.npmjs.org` |
+| `npm publish` fails with **404 Not Found** on `PUT …/@lossless-group%2flfm` | npm login expired; npm reports an unauthorized scoped publish as 404 | `npm login --registry=https://registry.npmjs.org`, check `npm whoami`, retry |
+| `ERR_PNPM_IGNORED_BUILDS` (esbuild)          | pnpm 12 blocks build scripts not allowed              | Keep `allowBuilds: esbuild: true` in `pnpm-workspace.yaml` |
+| CI: `packages field missing or empty`        | `pnpm-workspace.yaml` has no `packages` (CI is pnpm 9) | Add `packages: ['.']`                                   |
+| CDN 404 right after publishing               | npm still processing the new version (a few minutes)  | Wait, then retry; jsDelivr follows npm                    |

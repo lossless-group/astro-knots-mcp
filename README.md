@@ -69,7 +69,7 @@ gets a broken server entry.
 
 ## Skills
 
-`skills/` holds `start-an-astro-knot` and `knot-check` (written here) and eight
+`skills/` holds `start-an-astro-knot` and `knot-check` (written here) and thirteen
 skills copied from [lossless-agent-skills](https://github.com/lossless-group/lossless-agent-skills)
 by `pnpm sync-skills` (listed in [skills/SYNCED.md](skills/SYNCED.md)). Edit
 those in lossless-agent-skills, never here.

@@ -1,13 +1,13 @@
 ---
 name: lossless-flavored-markdown
-description: The Lossless Group's extended-markdown flavor — what LFM is, when to use it, how its directives normalize across syntaxes (CommonMark, GFM, Obsidian callouts, remark-directive, Markdoc), how citations and link previews work, and how sites extend it via trigger maps and theme tokens. Use whenever authoring or rendering content in any Astro Knots site, integrating the @lossless-group/lfm package, building or registering custom components for markdown, debugging callouts/embeds/citations, or when the user mentions "LFM", "Lossless Flavored Markdown", "extended markdown", "directive syntax", "wikilink", "trigger map", "callout", or "hex-code citation".
+description: The Lossless Group's extended-markdown flavor — what LFM is, when to use it, how its directives normalize across syntaxes (CommonMark, GFM, Obsidian callouts, remark-directive, Markdoc), how citations and link previews work, and how sites extend it via trigger maps and theme tokens. Use whenever authoring or rendering content in any Astro Knots site, integrating the @lossless-group/lfm package, building or registering custom components for markdown, debugging callouts/embeds/citations, rendering LFM in a browser page or Claude artifact with no build step (the /browser entry from jsDelivr), or when the user mentions "LFM", "Lossless Flavored Markdown", "extended markdown", "directive syntax", "wikilink", "trigger map", "callout", or "hex-code citation".
 ---
 
 # Lossless Flavored Markdown (LFM)
 
 > **MDX power without MDX's opinions.** A polyglot markdown spec where user-configured *syntax-triggers* drive a render pipeline in a frontend framework — so plain `.md` files get the expressive power of MDX, without the JSX-shaped lock-in.
 
-LFM is the Lossless Group's extended-markdown spec, implemented as the `@lossless-group/lfm` package. The package source lives inside the **`astro-knots`** repo today (and may graduate to its own repo later). Downstream sites and apps consume it as a dependency from **JSR (`jsr.io`)**, the canonical public registry. GitHub Packages is a secondary mirror for internal use.
+LFM is the Lossless Group's extended-markdown spec, implemented as the `@lossless-group/lfm` package. The package source lives in its own repo, `lossless-monorepo/lfm/` (GitHub `lossless-group/lossless-flavored-markdown-package`). Downstream sites and apps install it from **npm** (from 0.11.0; the registry the public CDNs mirror) or **JSR (`jsr.io`)**; both need no auth. GitHub Packages is a secondary mirror for internal use.
 
 **Canonical spec (the long form, ~4,400 lines):** `lossless-monorepo/astro-knots/context-v/specs/Codifying-a-Comprehensive-Extended-Markdown-Flavor-and-Shared-Package.md`
 
@@ -21,7 +21,8 @@ That's the whole shape. Everything else — the trigger map, the variant registr
 
 **Authoring / consuming side:**
 - Writing or rendering content in any Astro Knots site
-- Adding `@lossless-group/lfm` to a new project (`pnpm dlx jsr add @lossless-group/lfm`), or upgrading it
+- Adding `@lossless-group/lfm` to a new project (`pnpm add @lossless-group/lfm`, or `pnpm dlx jsr add @lossless-group/lfm`), or upgrading it
+- Rendering LFM in a page with no build step (a Claude artifact, a CodePen, a plain HTML file) via `@lossless-group/lfm/browser` from jsDelivr
 - Migrating an Obsidian vault into a publishable Astro site
 - Debugging callouts, hex-code citations, link previews, dialog blocks, image floats
 
@@ -29,7 +30,7 @@ That's the whole shape. Everything else — the trigger map, the variant registr
 - Working in `astro-knots/packages/lfm/` (or wherever the LFM source lives at the time)
 - Adding a new built-in trigger to the default trigger map
 - Modifying the AST normaliser, the OG fetcher, the citation resolver, the wikilink resolver
-- Cutting a JSR release of `@lossless-group/lfm`
+- Cutting a release of `@lossless-group/lfm` (one `v*` tag publishes to npm and JSR)
 - Promoting LFM to its own repo (when the team decides to)
 
 **Always:**
@@ -45,7 +46,7 @@ That's the whole shape. Everything else — the trigger map, the variant registr
 
 **The render pipeline is framework-agnostic.** `@lossless-group/lfm` is a `unified` / `remark` plugin. It produces a normalised AST with component nodes; the consuming framework (Astro, Svelte, Solid, plain HTML) supplies the components. Astro Knots sites are the primary consumer; the architecture doesn't preclude others.
 
-**JSR for consumption, astro-knots for development.** Sites and apps install via `jsr add @lossless-group/lfm`. Agents working *on* LFM itself work in `astro-knots/packages/lfm/` (or the dedicated repo, if/when it spins out). Releases go to JSR first; GitHub Packages is a mirror for internal-only consumers.
+**npm or JSR for consumption, the `lfm` repo for development.** Sites and apps install via `pnpm add @lossless-group/lfm` (npm) or `jsr add @lossless-group/lfm`. Pages with no build step import `@lossless-group/lfm/browser` from jsDelivr. Agents working *on* LFM itself work in `lossless-monorepo/lfm/`. One `v*` tag publishes to npm and JSR; GitHub Packages is a mirror for internal-only consumers.
 
 ## Six non-negotiable rules
 
@@ -168,7 +169,19 @@ cp <astro-knots>/packages/lfm-astro/components/*.astro \
    <astro-knots>/packages/lfm-astro/components/callout* src/components/markdown/
 ```
 
-JSR needs no auth tokens — clone-and-`pnpm install` works for any contributor. For the GitHub Packages mirror (internal-only), the local-development workflow when modifying LFM itself, full `remarkLfm` options, and the trigger-map override pattern, see [references/package-and-setup.md](references/package-and-setup.md).
+JSR needs no auth tokens — clone-and-`pnpm install` works for any contributor. From 0.11.0, plain npm works too: `pnpm add @lossless-group/lfm` (unless an `.npmrc` maps `@lossless-group` to GitHub Packages).
+
+## Quick render in a browser (no build step)
+
+For a Claude artifact or any plain HTML page, import the browser entry from jsDelivr, pinned to an exact version:
+
+```js
+import { parseMarkdown } from 'https://cdn.jsdelivr.net/npm/@lossless-group/lfm@0.11.0/browser/+esm';
+```
+
+Parse with LFM first, then convert to HTML with `remark-rehype` in a **separate** step; chaining `remarkLfm` and `remarkRehype` in one processor silently skips callouts and citations. Hex-code citations come out numbered by first appearance in `tree.data.citations.ordered`; never write citation numbers yourself. `/browser` has no Open Graph fetching. The full example and caveats are in [references/package-and-setup.md](references/package-and-setup.md#in-the-browser-with-no-build-step).
+
+For the GitHub Packages mirror (internal-only), the local-development workflow when modifying LFM itself, full `remarkLfm` options, and the trigger-map override pattern, see [references/package-and-setup.md](references/package-and-setup.md).
 
 ## Cross-skill seams
 
@@ -185,5 +198,5 @@ JSR needs no auth tokens — clone-and-`pnpm install` works for any contributor.
 - [references/syntax-and-directives.md](references/syntax-and-directives.md) — every directive form, all syntactic aliases, citation hex-code rules, code-fence component routing, dialog blocks, link-preview cards
 - [references/extensibility.md](references/extensibility.md) — the three customization layers (per-instance attributes, variant registry, theme tokens), reserved attribute names, validation policies
 - [references/frontmatter-schema.md](references/frontmatter-schema.md) — recommended fields, Zod schemas, status workflow, AI-co-authorship markers
-- [references/package-and-setup.md](references/package-and-setup.md) — JSR-first install, the GitHub Packages mirror, `remarkLfm` config, the co-development workflow when working *on* LFM
+- [references/package-and-setup.md](references/package-and-setup.md) — npm and JSR installs, the GitHub Packages mirror, rendering in the browser with `/browser`, `remarkLfm` config, the co-development workflow and release steps when working *on* LFM
 - **Canonical spec:** `lossless-monorepo/astro-knots/context-v/specs/Codifying-a-Comprehensive-Extended-Markdown-Flavor-and-Shared-Package.md` (the long form — 4,400 lines)

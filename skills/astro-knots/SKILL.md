@@ -180,11 +180,18 @@ Before writing any spec stub:
 2. **Drop a stub** in the right `context-v/specs/` (frontmatter + H1 only), then return focus to discussion. Don't try to draft the spec body in advance of the conversation.
 3. **Then proceed through the rhythm in `developing-a-spec.md`** — receive prior art, discuss → write → discuss, surface stale context-v files, sign-off gate, narrative pass, prompt-pairing.
 
+**Story and look come before the first component.** For any site with a public face (client sites, fundraise decks, splash pages), run two short design passes before building UI:
+
+1. **Narrative** (`write-site-narrative`): agree on what the site says, saved at `context-v/narratives/<Site>-Site-Narrative.md`.
+2. **Mood board** (`build-a-moodboard`): 2 to 4 reference worlds as one HTML file at `design/moodboard/index.html`, with interior spreads for print worlds, live websites as inspiration cards, and reactions logged in `design/moodboard/decisions.md`. The board is a working document. It never goes in `src/pages/` and never deploys with the site.
+
+The decisions note is the brief for `/brand-kit` and the first draft of `DESIGN.md` (`maintain-design-md`), so the theme's named color tokens come from pins the person actually liked. Reference implementation: `astro-knots/sites/mandatory-ventures/` (narrative, then mood board, then site).
+
 **After spec sign-off, before implementation:** load the setup playbook at `references/playbooks/new-site-setup.md` — the 12-step flow from repo creation through deploy config. For executable commands and file templates, cross-reference `astro-knots/context-v/prompts/New-Site-Quickstart-Guide.md` in the monorepo.
 
 **Deploying to GitHub Pages instead of Vercel** (for splash pages, per-repo landing sites, free static hosts): load `references/playbooks/github-pages-deploy.md`. It captures the canonical workflow shape, the `astro.config.mjs` `base` setting, and the three setup-time gotchas every new GitHub Pages repo hits — Pages-not-provisioned (`enablement: true`), branch-not-allowed (environment protection rule), and Source-still-on-"Deploy from a branch". Pay the setup tax once per repo, then the workflow handles itself.
 
-**Adding share-card metadata** (OpenGraph / Twitter / canonical / robots): load `references/playbooks/opengraph-system.md`. It encodes the realized two-file pattern shipped in calmstorm-decks and reach-edu-hub — `src/lib/seo.ts` registry + `src/components/basics/MetaTags.astro` renderer — plus the gated-vs-public and local-vs-CDN policy axes that drive defaults. Source blueprint: `lossless-monorepo/content/lost-in-public/blueprints/Maintain-an-Elegant-Open-Graph-System.md`.
+**Adding share-card metadata** (OpenGraph / Twitter / canonical / robots): load `references/playbooks/opengraph-system.md`. **Share images are standard equipment, like search:** every page gets its own generated card, and every h2/h3 of long-form content gets its own card and share URL (blueprint `astro-knots/context-v/blueprints/Share-Every-Page-and-Section-With-Its-Own-OG-Image.md`, reference `sites/cathode-site`). It encodes the realized two-file pattern shipped in calmstorm-decks and reach-edu-hub — `src/lib/seo.ts` registry + `src/components/basics/MetaTags.astro` renderer — plus the gated-vs-public and local-vs-CDN policy axes that drive defaults. Source blueprint: `lossless-monorepo/content/lost-in-public/blueprints/Maintain-an-Elegant-Open-Graph-System.md`.
 
 **Making the site LLM-friendly at inference time** (public docs, blueprints, study profiles, anything an external LLM might want to use to answer a user's question): load `references/playbooks/llms-txt-and-md-sidecars.md`. Two artifacts: `public/llms.txt` (curated index) and a `[...slug].md.ts` endpoint per content collection (raw markdown sidecar at the same URL with `.md` appended). Astro doesn't auto-generate either the way nbdev / VitePress / Docusaurus do — fill the gap deliberately. Skip on gated/noindex sites. Source profile: `studies/open-specs-and-standards/context-v/profiles/Profile__llms-txt.md`.
 
@@ -192,6 +199,7 @@ Before writing any spec stub:
 
 - **`context-vigilance`** governs *how* we document. **`astro-knots`** governs *what* we build (and the values around it). They compose: blueprints in a project's `context-v/blueprints/` should reflect Astro Knots tech principles.
 - **`pseudomonorepos`** — shipped. Composes directly with this skill: walk the tree, search before creating, log refactor debt when shipping fast.
+- **`write-site-narrative`** → **`build-a-moodboard`** → **`maintain-design-system-page`** / **`maintain-design-md`** / **`theme-system`**: the design run-up for a new site. Story first, then the look, then tokens and the brand kit.
 - Forthcoming: **`lfm`** (Lossless Flavored Markdown).
 
 ## See also
