@@ -7,6 +7,8 @@
 // never touched.
 //
 // Source: SKILLS_SOURCE, or the lossless-monorepo's context-v/agent-skills.
+// Most of the list lives in its astro-knots skill pack
+// (skill-packs/astro-knots/skills/); the rest sit at the root.
 
 import { cpSync, existsSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -36,8 +38,15 @@ if (!existsSync(source)) {
   process.exit(1);
 }
 
+// A skill sits at the repo root or inside a pack (skill-packs/<pack>/skills/).
+const packDirs = existsSync(join(source, "skill-packs"))
+  ? readdirSync(join(source, "skill-packs")).map((p) => join(source, "skill-packs", p, "skills"))
+  : [];
+const locate = (name) =>
+  [source, ...packDirs].map((d) => join(d, name)).find((d) => existsSync(join(d, "SKILL.md"))) ?? join(source, name);
+
 for (const name of SYNCED) {
-  const from = join(source, name);
+  const from = locate(name);
   if (!existsSync(join(from, "SKILL.md"))) {
     console.error(`sync-skills: ${name} has no SKILL.md at ${from}`);
     process.exit(1);

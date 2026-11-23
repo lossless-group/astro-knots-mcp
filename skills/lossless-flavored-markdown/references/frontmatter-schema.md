@@ -50,7 +50,7 @@ Sites filter content collections on `status === 'Published'` for production buil
 at_semantic_version: 0.0.1.1       # epoch.major.minor.patch
 ```
 
-The four-part scheme is the [`context-vigilance`](../../context-vigilance/) convention — read that skill for the decision rules. For LFM content the most common pattern:
+The four-part scheme is the [`context-vigilance`](../../../../../context-vigilance/) convention — read that skill for the decision rules. For LFM content the most common pattern:
 
 - **epoch** — bumped only when the document's premise changes (rare).
 - **major** — bumped when the structure or main argument changes substantially.

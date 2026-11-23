@@ -279,7 +279,7 @@ pnpm update @lossless-group/lfm @lossless-group/lfm-astro
 cat node_modules/@lossless-group/lfm/CHANGELOG.md
 ```
 
-The package's `CHANGELOG.md` follows the [changelog-conventions skill](../../changelog-conventions/) — `publish: true`, `lede`, ISO dates, etc.
+The package's `CHANGELOG.md` follows the [changelog-conventions skill](../../../../../changelog-conventions/) — `publish: true`, `lede`, ISO dates, etc.
 
 ## Co-developing LFM itself
 
@@ -330,7 +330,7 @@ Avoid `pnpm link --global` for cross-repo testing — it introduces version-reso
 One tag publishes to npm and JSR, each from its own workflow. GitHub Packages is published by hand.
 
 1. Bump `version` in **both** `package.json` and `deno.json`. Keep them in lockstep, and never reuse a version already on any registry: npm and JSR can't overwrite a version, and two registries holding different code under one number is worse than a skipped number.
-2. Write release notes in `changelog/releases/<version>.md` (see the prior release for the frontmatter: `release_tag`, `prior_release_version`, …), following the [changelog-conventions skill](../../changelog-conventions/).
+2. Write release notes in `changelog/releases/<version>.md` (see the prior release for the frontmatter: `release_tag`, `prior_release_version`, …), following the [changelog-conventions skill](../../../../../changelog-conventions/).
 3. Validate:
    ```bash
    pnpm install && pnpm test                       # test builds first
