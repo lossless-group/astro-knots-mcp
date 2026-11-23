@@ -186,11 +186,11 @@ For the GitHub Packages mirror (internal-only), the local-development workflow w
 ## Cross-skill seams
 
 - **[astro-knots](../astro-knots/)** — LFM is the markdown layer *inside* Astro Knots. Every Astro Knots site uses it.
-- **[context-vigilance](../../../../context-vigilance/)** — LFM frontmatter (`status`, `at_semantic_version`, `date_authored_*`) follows context-v conventions. The LFM spec itself lives in `astro-knots/context-v/specs/`.
+- **[context-vigilance](https://github.com/lossless-group/lossless-agent-skills/tree/main/context-vigilance/)** — LFM frontmatter (`status`, `at_semantic_version`, `date_authored_*`) follows context-v conventions. The LFM spec itself lives in `astro-knots/context-v/specs/`.
 - **[theme-system](../theme-system/)** — LFM components consume CSS custom properties (`--lfm-card-bg`, `--lfm-accent`). Layer 3 of LFM extensibility is pure theme tokens.
 - **[open-graph-share-seo-geo](../open-graph-share-seo-geo/)** — LFM's build-time OG fetch (rule 4) feeds both hover popovers *and* the page's `og:*` meta tags. Same metadata pipeline.
-- **[changelog-conventions](../../../../changelog-conventions/)** — Changelog entries are LFM markdown. Frontmatter conventions overlap (`date_published`, `date_modified`).
-- **[pseudomonorepos](../../../../pseudomonorepos/)** — `@lossless-group/lfm` is one of the shared packages that ties submodule sites together.
+- **[changelog-conventions](https://github.com/lossless-group/lossless-agent-skills/tree/main/changelog-conventions/)** — Changelog entries are LFM markdown. Frontmatter conventions overlap (`date_published`, `date_modified`).
+- **[pseudomonorepos](https://github.com/lossless-group/lossless-agent-skills/tree/main/pseudomonorepos/)** — `@lossless-group/lfm` is one of the shared packages that ties submodule sites together.
 
 ## See also
 
